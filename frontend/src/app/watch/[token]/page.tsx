@@ -3,31 +3,32 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { axios } from "@/app/lib/axios";
 import { useSearchParams } from "next/navigation";
-import { Button, Input, Typography } from "@material-tailwind/react";
-import { arrowLeft, arrowRight, plus } from "../../utils/icons";
+import { Input, Typography, Button } from "@material-tailwind/react";
+import { arrowLeft, arrowRight, playlistNextIcon, playlistPrevIcon, plus } from "../../utils/icons";
 import styled from "styled-components";
 import getVideoId from "get-video-id";
 import toast from "react-hot-toast";
 import ChatBox from "@/app/components/Chat/ChatBox";
-import { useGlobalState } from "@/app/context/globalProvider";
 import { useEcho } from "@/app/hooks/echo";
 import { LiveChatMessage } from "@/types/VideoSession/LiveChat";
+import { useAuth } from "@/app/hooks/auth";
+import { useGlobalState } from "@/app/context/globalProvider";
 
 export default function page() {
+    const { user, isLoggedIn } = useAuth({
+        middleware: "auth",
+        redirectIfAuthenticated: "/",
+    });
+
     const searchParams = useSearchParams();
-    const sessionId = useMemo(
-        () => searchParams.get("sessionId"),
-        [searchParams]
-    );
+
+    const { theme } = useGlobalState();
 
     const [videoId, setVideoId] = useState();
     const [videoIds, setVideoIds] = useState<string[]>([]);
 
     const [message, setMessage] = useState<string>("");
     const [messages, setMessages] = useState<LiveChatMessage[]>([]);
-
-    const echo = useEcho();
-    const { user } = useGlobalState();
 
     const chatBoxRef = useRef<HTMLDivElement>(null);
     const playerRef = useRef<any>(null);
@@ -37,6 +38,13 @@ export default function page() {
     const [currentState, setCurrentState] = useState<number | null>(null); // Tracks actual player state
     const [finalState, setFinalState] = useState<number | null>(null); // Tracks final player state
     const [addToQueueUrl, setAddToQueueUrl] = useState("");
+
+    const sessionId = useMemo(
+        () => searchParams.get("sessionId"),
+        [searchParams]
+    );
+
+    const echo = useEcho();
 
     const handleVideoIds = (newVideoId: string) => {
         setVideoIds((prevVideoIds) => {
@@ -263,7 +271,10 @@ export default function page() {
                         state: string;
                         seekTo: { seconds: string; allowSeekAhead: boolean };
                     }) => {
-                        data && handlePlayerEvents(data.state, data.seekTo);
+                        if (data) {
+                            console.log(">>", data);
+                            handlePlayerEvents(data.state, data.seekTo);
+                        }
                     }
                 )
                 .listen(
@@ -366,7 +377,7 @@ export default function page() {
     }, [videoIds]);
 
     return (
-        <Styled className="mx-5 main-container">
+        <Styled theme={theme} className="mx-5 main-container">
             <div className="container-header">
                 <div className="container-hedaer-actions">
                     {sessionId && (
@@ -382,15 +393,12 @@ export default function page() {
                                             )
                                         }
                                     >
-                                        {arrowLeft}
-                                        <Typography>Previous Video</Typography>
+                                        {playlistPrevIcon}
+                                        <Typography className="hidden md:block text-sm font-semibold">Previous</Typography>
                                     </button>
                                 </div>
                             </div>
                             <div className="header-utils-item">
-                                <Typography>
-                                    Click and share with friends:
-                                </Typography>
                                 <Input
                                     readOnly
                                     label="Session ID"
@@ -411,8 +419,8 @@ export default function page() {
                                         handlePlayerVideoSwitchRequest("next")
                                     }
                                 >
-                                    <Typography>Next Video</Typography>
-                                    {arrowRight}
+                                    <Typography className="hidden md:block text-sm font-semibold">Next</Typography>
+                                    {playlistNextIcon}
                                 </button>
                             </div>
                         </div>
@@ -434,9 +442,10 @@ export default function page() {
                     />
                 </div>
             </div>
-            <div className="actions">
-                <div className="video-action">
+            <div className="container-actions">
+                <div className="action-content">
                     <Input
+                        className="action-input rounded-l-lg rounded-r-none"
                         placeholder="Enter youtube video link"
                         id="addToQueue"
                         value={addToQueueUrl}
@@ -444,13 +453,17 @@ export default function page() {
                         label="Add to queue"
                         type="text"
                         crossOrigin={"anonymous"}
+                        labelProps={{
+                            className:
+                                "after:rounded-tr-none label-border-color",
+                        }}
                     />
-                    <button
+                    <Button
                         onClick={() => handleAddToQueue()}
-                        className="bg-colorBgButtonPrimary hover:bg-colorBgButtonPrimaryHover control"
+                        className="btn-pripary"
                     >
                         {plus}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </Styled>
@@ -459,6 +472,7 @@ export default function page() {
 
 const Styled = styled.div`
     flex-direction: column;
+    background-color: ${(props) => props.theme.colorBg};
 
     @media (max-width: 1023px) {
         .main-content {
@@ -490,7 +504,7 @@ const Styled = styled.div`
     }
 
     .container-hedaer-actions {
-        width: 70%;
+        width: 100%;
     }
 
     .header-utils {
@@ -499,18 +513,27 @@ const Styled = styled.div`
         gap: 4px;
         align-items: flex-end;
         width: 100%;
-        justify-content: space-between;
+        justify-content: space-evenly;
+        color: ${(props) => props.theme.colorTextSecondary};
+
+        .utils-title {
+            color: ${(props) => props.theme.colorTextPrimary};
+        }
     }
 
     .utils-btn {
         padding: 0.5rem 1.5rem;
         border: 1px solid;
         border-radius: 14px;
-        background: #202225;
+        background-color: ${(props) => props.theme.colorButtonPrimary};
 
         display: flex;
         align-items: center;
         gap: 0.5rem;
+    }
+
+    .utils-btn:hover {
+        background-color: ${(props) => props.theme.colorButtonPrimaryHover};
     }
 
     .player-container {
@@ -522,27 +545,43 @@ const Styled = styled.div`
         max-width: 860px;
     }
 
-    .video-action {
-        display: flex;
-        flex-direction: row;
+    .container-actions {
+        margin-bottom: 1rem;
+
+        .action-content {
+            display: flex;
+            flex-direction: row;
+
+            button {
+                width: 100%;
+                padding: 0 0.75rem;
+                border-radius: 0 14px 14px 0;
+                background-color: #5c16c5;
+                color: ${(props) => props.theme.colorTextSecondary};
+            }
+
+            button:hover {
+                background-color: #772ce8;
+            }
+        }
     }
 
-    .actions {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
+    .peer:focus ~ label.label-border-color::before,
+    .peer:focus ~ label.label-border-color::after {
+        border-color: ${(props) => props.theme.colorFontPrimary} !important;
+    }
 
-        input {
-            background-color: #2f3136;
-            border: 2px solid rgb(239, 239, 241);
-            border-radius: 14px 0 0 14px;
-            padding-left: 0.75rem;
-        }
+    .peer:focus {
+        border-left-color: ${(props) =>
+            props.theme.colorFontPrimary} !important;
+        border-right-color: ${(props) =>
+            props.theme.colorFontPrimary} !important;
+        border-bottom-color: ${(props) =>
+            props.theme.colorFontPrimary} !important;
+        transition: border-color 0.2s ease;
+    }
 
-        .control {
-            padding: 0 0.75rem;
-            height: 100%;
-            border-radius: 0 14px 14px 0;
-        }
+    .peer:focus ~ label.label-border-color {
+        color: ${(props) => props.theme.colorFontPrimary} !important;
     }
 `;

@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 import { Button, Input } from "@material-tailwind/react";
 import toast from "react-hot-toast";
-import { axios } from "@/app/lib/axios";
-import { useAuth } from "@/app/hooks/auth";
 import getVideoId from "get-video-id";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
@@ -17,7 +15,7 @@ import {
 export default function VideoSession() {
     const [videoUrl, setVideoUrl] = useState<string>("");
     const [sessionId, setSessionId] = useState<string>("");
-    const { user } = useGlobalState();
+    const { user, theme } = useGlobalState();
     const router = useRouter();
 
     const handleCreateSession = async (e: any) => {
@@ -67,7 +65,7 @@ export default function VideoSession() {
     };
 
     return (
-        <VideoSessionStyled className="container">
+        <VideoSessionStyled theme={theme} className="container">
             <div className="container">
                 <div className="action">
                     <div className="action-header">
@@ -76,7 +74,7 @@ export default function VideoSession() {
                     <div className="action-content">
                         <Input
                             label="Video URL"
-                            className="action-input"
+                            className="action-input rounded-l-lg rounded-r-none"
                             placeholder="Youtube Video Link"
                             value={videoUrl}
                             onChange={(e) => setVideoUrl(e.target.value)}
@@ -84,13 +82,14 @@ export default function VideoSession() {
                             type="text"
                             crossOrigin={"anonymous"}
                             minLength={5}
+                            labelProps={{ className: "after:rounded-tr-none label-border-color" }}
                         />
-                        <button
+                        <Button
                             className="btn-primary"
                             onClick={handleCreateSession}
                         >
                             Start
-                        </button>
+                        </Button>
                     </div>
                 </div>
                 <div className="action">
@@ -100,7 +99,7 @@ export default function VideoSession() {
                     <div className="action-content">
                         <Input
                             label="Session ID"
-                            className="action-input"
+                            className="action-input rounded-l-lg rounded-r-none"
                             placeholder="Enter Session ID"
                             value={sessionId}
                             onChange={(e) => setSessionId(e.target.value)}
@@ -108,13 +107,17 @@ export default function VideoSession() {
                             type="text"
                             crossOrigin={"anonymous"}
                             minLength={5}
+                            labelProps={{
+                                className:
+                                    "after:rounded-tr-none label-border-color",
+                            }}
                         />
-                        <button
+                        <Button
                             className="btn-primary"
                             onClick={handleJoinSession}
                         >
                             Join
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -123,35 +126,48 @@ export default function VideoSession() {
 }
 
 const VideoSessionStyled = styled.div`
-  .action {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .action-header {
-    display: flex;
-    margin-top: 1rem;
-    margin-bottom: .5rem;
-    justify-content: center;
-  }
-
-  .action-content {
-    display: flex;
-    flex-direction: row;
-
-    button {
-      width: 100%;
-      padding: 0 0.75rem;
-      border-radius: 0 14px 14px 0;
-      background-color: #5c16c5;
+    .action {
+        display: flex;
+        flex-direction: column;
     }
 
-    .action-input {
-      border-radius: 14px 0 0 14px;
+    .action-header {
+        display: flex;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        justify-content: center;
     }
 
-    button:hover {
-      background-color: #772ce8;
+    .peer:focus ~ label.label-border-color::before,
+    .peer:focus ~ label.label-border-color::after {
+        border-color: ${(props) => props.theme.colorFontPrimary} !important;
     }
-  }
+
+    .peer:focus {
+      border-left-color: ${(props) => props.theme.colorFontPrimary} !important;
+      border-right-color: ${(props) => props.theme.colorFontPrimary} !important;
+      border-bottom-color: ${(props) => props.theme.colorFontPrimary} !important;
+      transition: border-color 0.2s ease;
+    }
+
+    .peer:focus ~ label.label-border-color {
+      color: ${(props) => props.theme.colorFontPrimary} !important;
+    }
+
+    .action-content {
+        display: flex;
+        flex-direction: row;
+
+        button {
+            width: 100%;
+            padding: 0 0.75rem;
+            border-radius: 0 14px 14px 0;
+            background-color: #5c16c5;
+            color: ${(props) => props.theme.colorTextSecondary};
+        }
+
+        button:hover {
+            background-color: #772ce8;
+        }
+    }
 `;
