@@ -1,5 +1,4 @@
-import { user } from "@/app/utils/icons";
-import React, { createRef, useRef } from "react";
+import React, { useRef } from "react";
 import styled from "styled-components";
 
 interface Props {
@@ -7,7 +6,7 @@ interface Props {
     name: string;
     chatNameColor: string;
     userId: number;
-    handleMiniProfileClick: (e:any, userId: number) => void;
+    handleMiniProfileClick: (e: any, userId: number) => void;
 }
 
 export default function ChatMessage({

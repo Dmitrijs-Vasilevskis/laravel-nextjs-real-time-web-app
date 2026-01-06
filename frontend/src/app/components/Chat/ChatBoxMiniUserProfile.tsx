@@ -1,89 +1,85 @@
 "use client";
 
-import { axios } from "@/app/lib/axios";
-import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { xmarkIcon } from "@/app/utils/icons";
 import { useGlobalState } from "@/app/context/globalProvider";
-import toast from "react-hot-toast";
-import { sendFriendRequest } from "@/services/api/firendship";
 import { UserInterface } from "@/types/User/User";
-import { fetchUserData } from "@/services/api/user";
 
 interface Props {
-    userId: number;
+    selectedUser: UserInterface;
     relativePosition: number | null;
-    handleOpenMiniProfile: () => void;
+    handleCloseMiniProfile: () => void;
+    handleSendFriendshipInvite: (userId: number) => void;
+    handleWhisper: (user: UserInterface) => void;
+    isUserInFriendList: (userId: number) => boolean;
 }
 
 export default function ChatBoxMiniUserProfile({
-    userId,
+    selectedUser,
     relativePosition,
-    handleOpenMiniProfile,
+    handleCloseMiniProfile,
+    handleSendFriendshipInvite,
+    handleWhisper,
+    isUserInFriendList,
 }: Props) {
-    const [selectedUser, setSelectedUser] = useState<UserInterface>();
-    const { user } = useGlobalState();
+    const { theme, user } = useGlobalState();
 
-    const sendFriendInivite = async () => {
-        if (!selectedUser) return;
-        try {
-            const { message } = await sendFriendRequest(selectedUser?.id);
-            toast.success(message);
-        } catch (error) {
-            toast.error("Failed to send friend request");
-        }
-    };
-
-    const getSelectedUserData = async (userId: number) => {
-        try {
-            const userData = await fetchUserData(userId);
-            setSelectedUser(userData);
-        } catch (error) {
-            toast.error("Failed to fetch user data.");
-        }
-    };
-
-    useMemo(() => {
-        if (userId) getSelectedUserData(userId);
-    }, [userId]);
+    const isFriend = isUserInFriendList(selectedUser.id);
 
     return (
-        <ChatBoxMiniUserProfileStyled top={relativePosition}>
-            {selectedUser ? (
-                <>
-                    <div className="mini-profile-header">
-                        <div className="mini-profile-image">
-                            <img
-                                className="h-12 w-12 rounded-full object-cover object-center"
-                                src={selectedUser?.profile_picture_url}
-                                alt="profile picture preview"
-                                width={50}
-                                height={50}
-                            />
-                        </div>
-                        <div>
-                            <div className="mini-profile-name">
-                                <span>{selectedUser?.name}</span>
-                            </div>
-                        </div>
-                        <div
-                            onClick={handleOpenMiniProfile}
-                            className="action-close"
-                        >
-                            {xmarkIcon}
+        <ChatBoxMiniUserProfileStyled theme={theme} top={relativePosition}>
+            <>
+                <div className="mini-profile-header">
+                    <div className="mini-profile-image">
+                        <img
+                            className="h-12 w-12 rounded-full object-cover object-center"
+                            src={selectedUser?.profile_picture_url}
+                            alt="profile picture preview"
+                            width={50}
+                            height={50}
+                        />
+                    </div>
+                    <div>
+                        <div className="mini-profile-name">
+                            <span>{selectedUser?.name}</span>
                         </div>
                     </div>
+                    <div
+                        onClick={handleCloseMiniProfile}
+                        className="action-close"
+                    >
+                        {xmarkIcon}
+                    </div>
+                </div>
+                {user.id !== selectedUser.id && (
                     <div className="mini-profile-actions">
-                        {selectedUser.id !== user.id && (
+                        {!isFriend && (
                             <div className="mini-profile-action">
-                                <button onClick={sendFriendInivite}>
+                                <button
+                                    className="btn-primary actions-button"
+                                    onClick={() =>
+                                        handleSendFriendshipInvite(
+                                            selectedUser.id
+                                        )
+                                    }
+                                >
                                     <span>Add Friend</span>
                                 </button>
                             </div>
                         )}
+                        {isFriend && (
+                            <div className="mini-profile-action">
+                                <button
+                                    className="btn-primary actions-button"
+                                    onClick={() => handleWhisper(selectedUser)}
+                                >
+                                    <span>Whisper</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
-                </>
-            ) : null}
+                )}
+            </>
         </ChatBoxMiniUserProfileStyled>
     );
 }
@@ -91,21 +87,44 @@ export default function ChatBoxMiniUserProfile({
 const ChatBoxMiniUserProfileStyled = styled.div<{ top: number | null }>`
     position: absolute;
     top: ${(props) => props.top}px;
-    padding-top: 0.5rem;
     width: 100%;
-    background: #f9f9f9;
 
     .mini-profile-header {
         display: flex;
         flex-direction: row;
         position: relative;
-        margin: 0 1rem;
+        padding: 0.5rem 1rem;
+        background-color: ${(props) => props.theme.colorBg};
+        border-bottom: 1px solid #53535f7a;
+        border-top: 1px solid #53535f7a;
+
+        .mini-profile-name {
+            align-contet: center;
+            margin-left: 0.5rem;
+            color: ${(props) => props.theme.colorTextPrimary};
+        }
+
+        .action-close {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            right: 0;
+            margin: 0.5rem 1rem;
+            color: ${(props) => props.theme.colorIcons};
+        }
     }
 
-    .action-close {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        right: 0;
+    .mini-profile-actions {
+        background-color: ${(props) => props.theme.colorBg4};
+        padding: 0.5rem;
+        gap: 8px;
+        display: flex;
+        border-bottom: 1px solid #53535f7a;
+
+        .actions-button {
+            padding: 0.5rem;
+            border-radius: 14px;
+            color: ${(props) => props.theme.colorTextSecondary};
+        }
     }
 `;

@@ -7,6 +7,12 @@ import { useEffect, useState } from "react";
 import { emoji } from "@/app/utils/icons";
 import styled from "styled-components";
 import ChatBoxMiniUserProfile from "./ChatBoxMiniUserProfile";
+import { useGlobalState } from "@/app/context/globalProvider";
+import { sendFriendRequest } from "@/services/api/firendship";
+import toast from "react-hot-toast";
+import { fetchUserData } from "@/services/api/user";
+import { UserInterface } from "@/types/User/User";
+import { useFriendship } from "@/app/hooks/friendship";
 
 interface Props {
     messages: {
@@ -32,9 +38,30 @@ export default function ChatBox({
 }: Props) {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [openMiniProfile, setOpenMiniProfile] = useState(false);
-    const [miniProfileUserId, setMiniProfileUserId] = useState<number | null>(null);
+    const [miniProfileUserId, setMiniProfileUserId] = useState<number | null>(
+        null
+    );
+    const [miniProfileUserData, setMiniProfileUserData] =
+        useState<UserInterface | null>(null);
     const [miniProfileRelativePosition, setMiniProfileRelativePosition] =
         useState<number | null>(null);
+
+    const { theme, user, openMiniChat } = useGlobalState();
+    const {
+        friends,
+        friendById,
+        isUserInFriendList,
+        selectedChat,
+        handleSelectChat,
+    } = useFriendship();
+
+    const handleWhisperAction = async (user: UserInterface) => {
+        const friend = friendById.get(user.id);
+        if (friend) {
+            handleSelectChat(friend);
+            openMiniChat();
+        }
+    };
 
     const handleEmojiClick = (emojiObject: EmojiClickData) => {
         setMessage((prevMessage) => prevMessage + emojiObject.emoji);
@@ -46,30 +73,54 @@ export default function ChatBox({
         }
     };
 
-    const handleOpenMiniProfile = () => {
-        setOpenMiniProfile(!openMiniProfile);
+    const handleSendFriendshipInvite = async (userId: number) => {
+        try {
+            const { message } = await sendFriendRequest(userId);
+            toast.success(message);
+        } catch (error: any) {
+            toast.error("Failed to send friend request");
+        }
     };
 
-    const handleMiniProfileClick = (event: any, userId: number) => {
+    const handleFetchSelectedUserData = async (userId: number) => {
+        try {
+            const userData = await fetchUserData(userId);
+            setMiniProfileUserData(userData);
+        } catch (error: any) {
+            toast.error("Failed to fetch user data.");
+        }
+    };
+
+    const handleOpenMiniProfile = (event: any, userId: number) => {
         if (chatBoxRef.current) {
             const containerRect = chatBoxRef.current.getBoundingClientRect();
             const relativeY = event.clientY - containerRect.top;
             setMiniProfileRelativePosition(relativeY);
             setMiniProfileUserId(userId);
-            setOpenMiniProfile(!openMiniProfile);
+            setOpenMiniProfile(true);
         }
+    };
+
+    const handleCloseMiniProfile = () => {
+        setOpenMiniProfile(false);
+        setMiniProfileUserId(null);
+        setMiniProfileUserData(null);
     };
 
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
-    const styles: React.CSSProperties = { maxHeight: "350px" };
+    useEffect(() => {
+        if (miniProfileUserId) {
+            handleFetchSelectedUserData(miniProfileUserId);
+        }
+    }, [miniProfileUserId]);
 
     return (
-        <ChatBoxStyled className="chat-container">
+        <ChatBoxStyled theme={theme} className="chat-container">
             <div className="chat-header">
-                <Typography variant="h4" className="uppercase text-base">
+                <Typography variant="h4" className="uppercase text-sm">
                     Live Chat
                 </Typography>
             </div>
@@ -81,18 +132,21 @@ export default function ChatBox({
                         name={data.from}
                         chatNameColor={data.chat_name_color}
                         userId={data.user_id}
-                        handleMiniProfileClick={handleMiniProfileClick}
+                        handleMiniProfileClick={handleOpenMiniProfile}
                     />
                 ))}
-                {openMiniProfile && (
+                {openMiniProfile && miniProfileUserData !== null && (
                     <ChatBoxMiniUserProfile
-                        handleOpenMiniProfile={handleOpenMiniProfile}
+                        selectedUser={miniProfileUserData}
                         relativePosition={miniProfileRelativePosition}
-                        userId={miniProfileUserId}
+                        handleCloseMiniProfile={handleCloseMiniProfile}
+                        handleSendFriendshipInvite={handleSendFriendshipInvite}
+                        handleWhisper={handleWhisperAction}
+                        isUserInFriendList={isUserInFriendList}
                     />
                 )}
             </div>
-            <div className="chat-input-container flex flex-row pb-4 pr-4 pl-4 gap-3">
+            <div className="chat-input-container">
                 {showEmojiPicker && (
                     <Picker
                         onEmojiClick={handleEmojiClick}
@@ -102,30 +156,34 @@ export default function ChatBox({
                         }}
                         className="emoji-picker"
                         width={"90%"}
-                        style={styles}
                     />
                 )}
                 <div className="chat-input-box">
                     <Input
                         type="text"
+                        className="chat-input action-input"
                         id="chat-input"
                         label="Send a message"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         crossOrigin={"anonymous"}
                         onKeyDown={handleKeyDown}
+                        labelProps={{
+                            className: "label-border-color",
+                        }}
                     />
-                    <a
+                    <button
                         className="chat-input-emoji-picker"
-                        onClick={(e) => setShowEmojiPicker(!showEmojiPicker)}
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     >
                         {emoji}
-                    </a>
+                    </button>
                 </div>
                 <button
-                    className="bg-colorBgButtonPrimary rounded hover:bg-colorBgButtonPrimaryHover"
+                    className="btn-primary input-btn"
                     onClick={() => {
-                        handleSendMessage(message), setShowEmojiPicker(false);
+                        handleSendMessage(message);
+                        setShowEmojiPicker(false);
                     }}
                 >
                     <span className="text-sm font-semibold leading-5 flex px-3">
@@ -141,16 +199,22 @@ const ChatBoxStyled = styled.section`
     border: 1px solid #53535f7a;
     display: flex;
     flex-direction: column;
-    width: 300px;
+    width: 100%;
     height: 500px;
-    background-color: rgb(24, 24, 27);
-    border-radius: 0 14px 14px 0;
+    background-color: ${(props) => props.theme.colorBg3};
+    border-radius: 0 0 14px 14px;
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     position: relative;
 
+    @media (min-width: 1023px) {
+        width: 300px;
+        border-radius: 0 14px 14px 0;
+    }
+
     .chat-header {
-        background-color: #18181b;
+        background-color: ${(props) => props.theme.colorBg2};
+        color: ${(props) => props.theme.colorTextPrimary};
         height: 3rem;
         padding-left: 10px;
         padding-right: 10px;
@@ -169,12 +233,24 @@ const ChatBoxStyled = styled.section`
 
     .chat-input-container {
         position: relative;
+        background-color: ${(props) => props.theme.colorBg2};
+        border-top: 1px solid #53535f7a;
+        display: flex;
+        flex-direction: row;
+        padding: 0.5rem;
+        gap: 12px;
+
+        .input-btn {
+            border-radius: 14px;
+            color: ${(props) => props.theme.colorTextSecondary};
+        }
     }
 
     .emoji-picker {
         position: absolute;
         padding-bottom: 1rem;
         bottom: 60px;
+        max-height: 350px;
     }
 
     .message {
@@ -196,26 +272,9 @@ const ChatBoxStyled = styled.section`
         color: #fff;
     }
 
-    .chat-input {
-        display: flex;
-        background-color: #18181b;
-        padding: 10px;
-        border-top: 1px solid #2f3136;
-    }
-
-    .chat-input input {
-        flex: 1;
-        background-color: #40444b;
-        border: none;
-        padding: 10px;
-        border-radius: 5px;
-        color: #fff;
-        margin-right: 10px;
-        outline: none;
-    }
-
     .chat-input-box {
         position: relative;
+        flex-grow: 1;
     }
 
     .chat-input-emoji-picker {
@@ -224,6 +283,7 @@ const ChatBoxStyled = styled.section`
         right: 10px;
         transform: translateY(-50%);
         cursor: pointer;
+        color: ${(props) => props.theme.colorIcons};
     }
 
     .chat-input input::placeholder {
