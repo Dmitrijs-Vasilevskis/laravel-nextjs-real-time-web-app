@@ -11,6 +11,18 @@ export const fetchFriends = async () => {
     }
 };
 
+export const fetchSortedFriends = async (searchTerm: string) => {
+    try {
+        const response = await axios.post("/api/fetch-sorted-friends", {
+            searchByName: searchTerm
+        });
+
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || "Failed to fetch friend list");
+    }
+}
+
 export const sendFriendRequest = async (receiver_id: number): Promise<{message: string}> => {
     try {
         const response = await axios.post("/api/friend-request/send", {
