@@ -1,26 +1,29 @@
 "use client";
-import React, { createContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import { GlobalProvider } from "../context/globalProvider";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/app/components/UI/Toaster";
+import { FriendshipProvider } from "../context/friendshipContext";
 
 interface Props {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }
 
 export default function ContextProvider({ children }: Props) {
-  const [isInitialized, setIsInitialized] = React.useState(false);
+    const [isInitialized, setIsInitialized] = React.useState(false);
 
-  useEffect(() => {
-    setIsInitialized(true);
-  }, []);
+    useEffect(() => {
+        setIsInitialized(true);
+    }, []);
 
-  if (!isInitialized) {
-    return null;
-  }
-  return (
-    <GlobalProvider>
-      <Toaster />
-      {children}
-    </GlobalProvider>
-  );
+    if (!isInitialized) {
+        return null;
+    }
+    return (
+        <GlobalProvider>
+            <FriendshipProvider>
+                <Toaster />
+                {children}
+            </FriendshipProvider>
+        </GlobalProvider>
+    );
 }
