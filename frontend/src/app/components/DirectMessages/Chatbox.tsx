@@ -12,20 +12,19 @@ import ChatMessage from "./ChatMessage";
 interface Props {
     selectedChat: FriendInterface | null;
     messages: DirectMessageInterface[];
-    setMessages?: React.Dispatch<React.SetStateAction<DirectMessageInterface[]>>;
     handleReadMessageRequest: (message_id: number, sender_id: number) => void;
-    chatBoxRef: React.RefObject<HTMLDivElement>;
     handleSendDirectMessage: (message: string) => void;
+    chatBoxRef: React.RefObject<HTMLDivElement>;
     handleCloseChatBox?: () => void;
 }
+
 
 export default function Chatbox({
     selectedChat,
     messages,
     handleReadMessageRequest,
-    setMessages,
-    chatBoxRef,
     handleSendDirectMessage,
+    chatBoxRef,
     handleCloseChatBox,
 }: Props) {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -34,9 +33,10 @@ export default function Chatbox({
         Set<DirectMessageInterface>
     >(new Set());
     const messageRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const lastMessageIdRef = useRef<number | null>(null);
     const hasScrolledToUnread = useRef(false);
 
-    const { user } = useGlobalState();
+    const { user, theme } = useGlobalState();
 
     const handleEmojiClick = (emojiObject: EmojiClickData) => {
         setMessage((prevMessage) => prevMessage + emojiObject.emoji);
@@ -60,7 +60,7 @@ export default function Chatbox({
         }
     };
 
-    const onSendMessage = () => {
+    const onSendMessage = async () => {
         if (message) {
             handleSendDirectMessage(message);
             setMessage("");
@@ -122,10 +122,13 @@ export default function Chatbox({
 
     useEffect(() => {
         if (readSenderMessages.size > 0) {
-            const { id: message_id, sender_id } = readSenderMessages
-                .values()
-                .next().value;
-            handleReadMessageRequest(message_id, sender_id);
+            const firstUnread = readSenderMessages.values().next()
+                .value as DirectMessageInterface;
+
+            if (firstUnread) {
+                const { id, sender_id } = firstUnread;
+                handleReadMessageRequest(id, sender_id);
+            }
         }
     }, [readSenderMessages]);
 
@@ -136,14 +139,27 @@ export default function Chatbox({
         }
     }, [selectedChat]);
 
+    useEffect(() => {
+        if (messages.length === 0) return;
+
+        const last = messages[messages.length - 1];
+
+        if (last.id !== lastMessageIdRef.current && last.sender_id == user.id) {
+            scrollToBottom();
+        }
+
+        lastMessageIdRef.current = last.id;
+    }, [messages]);
+
     return (
-        <ChatboxStyled>
+        <ChatboxStyled
+            theme={theme}
+            className={`chat-box ${
+                !!selectedChat ? "chat-selected" : "chat-closed"
+            }`}
+        >
             {selectedChat ? (
-                <div
-                    className={`chat-container ${
-                        selectedChat ? "show" : "hide"
-                    }`}
-                >
+                <div className="chat-container">
                     <div className="chat-header-container">
                         <span
                             className="chat-close-icon"
@@ -193,16 +209,15 @@ export default function Chatbox({
                                 onKeyDown={(e) => handleKeyDown(e)}
                                 onChange={(e) => setMessage(e.target.value)}
                             />
-                            <a
+                            <button
                                 className="chat-input-emoji-picker"
                                 onClick={(e) =>
                                     setShowEmojiPicker(!showEmojiPicker)
                                 }
                             >
                                 {emoji}
-                            </a>
+                            </button>
                         </div>
-
                         <button
                             onClick={onSendMessage}
                             className="btn-primary input-btn"
@@ -226,6 +241,9 @@ const ChatboxStyled = styled.section`
     flex: 1 1 0%;
     display: flex;
     flex-direction: column;
+    background-color: ${(props) => props.theme.colorBg2};
+    border-top-right-radius: 14px;
+    border-bottom-right-radius: 14px;
 
     .chat-container {
         flex: 1 1 0%;
@@ -236,7 +254,8 @@ const ChatboxStyled = styled.section`
             position: relative;
             padding: 20px;
             border-bottom: 1px solid #ddd;
-            background-color: #ffffff;
+            border-top-right-radius: 14px;
+            background-color: ${(props) => props.theme.colorBg};
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -267,9 +286,10 @@ const ChatboxStyled = styled.section`
         }
 
         .chat-actions-wrapper {
-            padding: 20px;
+            padding: .5rem 1rem;
             border-top: 1px solid #ddd;
-            background-color: #ffffff;
+            border-bottom-right-radius: 14px;
+            background-color: ${(props) => props.theme.colorBg};
             display: flex;
             gap: 10px;
             align-items: center;
@@ -283,16 +303,17 @@ const ChatboxStyled = styled.section`
             .chat-input-emoji-picker {
                 cursor: pointer;
                 position: absolute;
-                right: 0;
-                transform: translateY(50%);
-                margin-right: 1rem;
+                left: 0;
+                align-self: center;
+                margin-left: 1rem;
             }
 
             .chat-input {
                 flex: 1;
-                padding: 10px;
+                padding: 0.5rem 0.5rem 0.5rem 2.5rem;
                 border-radius: 14px;
                 border: 1px solid #ddd;
+                background-color: transparent;
             }
 
             .input-btn {
@@ -308,7 +329,6 @@ const ChatboxStyled = styled.section`
             position: absolute;
             padding-bottom: 1rem;
             transform: translateY(-100%);
-            right: 0;
         }
     }
 
@@ -319,7 +339,7 @@ const ChatboxStyled = styled.section`
         align-items: center;
 
         .chat-empty-text {
-            background-color: #e7e7e7;
+            background-color: ${(props) => props.theme.colorBg3};
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
         }

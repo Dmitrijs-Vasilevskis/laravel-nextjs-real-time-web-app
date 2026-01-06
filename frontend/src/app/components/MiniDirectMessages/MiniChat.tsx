@@ -2,31 +2,33 @@
 
 import styled from "styled-components";
 import MessageIconSvg from "@/assets/icons/message-icon.svg";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import MiniChatbox from "./MiniChatbox";
 import { useGlobalState } from "@/app/context/globalProvider";
 import { FriendInterface } from "@/types/User/Firendship";
+import { useFriendship } from "@/app/hooks/friendship";
 
 export default function MiniChat() {
-    const { friendList } = useGlobalState();
-    const [isOpen, setIsOpen] = useState(false);
+    const { theme, miniChatOpen, toggleMiniChat } = useGlobalState();
+
+    const { friends } = useFriendship();
 
     const hasUnreadMessages = useMemo(() => {
-        return friendList.some((friend: FriendInterface) => {
+        return friends.some((friend: FriendInterface) => {
             return !!friend.chat?.unreadCount;
         });
-    }, [friendList]);
-
-    const handleIsOpen = () => {
-        setIsOpen(!isOpen);
-    };
+    }, [friends]);
 
     return (
-        <MiniChatStyled>
-            <div className={`messenger-frame border ${isOpen ? "show" : ""}`}>
-                {isOpen && <MiniChatbox />}
+        <MiniChatStyled theme={theme}>
+            <div
+                className={`messenger-frame border ${
+                    miniChatOpen ? "show" : ""
+                }`}
+            >
+                {miniChatOpen && <MiniChatbox />}
             </div>
-            <div onClick={handleIsOpen} className="mini-chat-icon">
+            <div onClick={toggleMiniChat} className="mini-chat-icon">
                 {hasUnreadMessages && <span className="unread"></span>}
                 <MessageIconSvg width={24} height={24} />
             </div>
@@ -53,6 +55,7 @@ const MiniChatStyled = styled.div`
         align-items: center;
         -webkit-box-pack: center;
         justify-content: center;
+        fill: #fff;
     }
 
     .mini-chat-icon:hover {

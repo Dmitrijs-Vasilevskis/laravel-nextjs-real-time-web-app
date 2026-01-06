@@ -82,6 +82,7 @@ const ChatMessageStyled = styled.div`
 
     .left {
         justify-content: left;
+        color: #000000;
 
         .message-content {
             border-radius: 14px 14px 14px 0;
@@ -91,6 +92,7 @@ const ChatMessageStyled = styled.div`
 
     .right {
         justify-content: right;
+        color: #ffffff;
 
         .message-content {
             border-radius: 14px 14px 0 14px;

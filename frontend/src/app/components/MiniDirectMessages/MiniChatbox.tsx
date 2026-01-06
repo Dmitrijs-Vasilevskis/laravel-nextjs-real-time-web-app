@@ -4,37 +4,46 @@ import styled from "styled-components";
 import { useGlobalState } from "@/app/context/globalProvider";
 import Chatbox from "../DirectMessages/Chatbox";
 import { useChat } from "@/app/hooks/chat";
+import { useFriendship } from "@/app/hooks/friendship";
+import { FriendInterface } from "@/types/User/Firendship";
+
+interface Props {
+    selectedChat: FriendInterface | null;
+    handleSelectChat: (data: FriendInterface | null) => void;
+    friends: FriendInterface[];
+    handleReadMessageEvent: (messageId: number, senderId: number) => void;
+}
 
 export default function MiniChatbox() {
-    const { user, friendList, theme, handleUnreadCount } = useGlobalState();
-
-    if (!user) return;
+    const { theme } = useGlobalState();
 
     const {
-        selectedChat,
         messages,
         chatBoxRef,
-        setSelectedChat,
-        handleSendDirectMessage,
-        handleReadMessageRequest,
-        handleCloseChatBox,
+        sendDirectMessage,
+        closeChatBox,
+        readMessageRequest,
+        handleSelectChat,
+        selectedChat,
     } = useChat();
+
+    const { friends, updateUnreadCount } = useFriendship();
 
     const handleReadMessageEvent = async (
         messageId: number,
         senderId: number
     ) => {
-        handleReadMessageRequest(messageId, senderId).then(() => {
-            handleUnreadCount(messageId, senderId);
+        readMessageRequest(messageId, senderId).then(() => {
+            updateUnreadCount(senderId, false);
         });
     };
 
     return (
         <MiniChatBoxStyled theme={theme} className="flex flex-row h-full">
             <ul className="border-r scroll">
-                {friendList.map((friend, index) => (
+                {friends.map((friend, index) => (
                     <li
-                        onClick={() => setSelectedChat(friend)}
+                        onClick={() => handleSelectChat(friend)}
                         key={index}
                         className={`friend-list-item list-item ${
                             friend.data.id === selectedChat?.data.id &&
@@ -59,9 +68,9 @@ export default function MiniChatbox() {
                     selectedChat={selectedChat}
                     messages={messages}
                     handleReadMessageRequest={handleReadMessageEvent}
-                    handleSendDirectMessage={handleSendDirectMessage}
+                    handleSendDirectMessage={sendDirectMessage}
                     chatBoxRef={chatBoxRef}
-                    handleCloseChatBox={handleCloseChatBox}
+                    handleCloseChatBox={closeChatBox}
                 />
             </div>
         </MiniChatBoxStyled>
@@ -83,7 +92,6 @@ const MiniChatBoxStyled = styled.div`
         height: 100%;
         background-color: #ddd;
         border-radius: 50%;
-        margin: 0 10px;
 
         .unread {
             background-color: #f00;

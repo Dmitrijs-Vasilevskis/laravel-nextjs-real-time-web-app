@@ -14,14 +14,21 @@ import {
 } from "@/app/utils/icons";
 import { useGlobalState } from "@/app/context/globalProvider";
 import { formatTimeHourMinutes } from "@/app/utils/formatTime";
+import SkeletonLoader from "../UI/Loader/Skeleton";
+import { useFriendship } from "@/app/hooks/friendship";
 
 interface Props {
     handleSelectedChat: (friend: FriendInterface) => void;
     selectedChat: FriendInterface | null;
     friends: FriendInterface[];
+    friendListSearchInputvalue: string;
     pending: FriendPendingInterface[];
     handlePendingAccept: (sender_id: number) => void;
     handlePendingDecline: (sender_id: number) => void;
+    handleFriendListSearchInput: (name: string) => void;
+    clearSearch: () => void;
+    isSearching: boolean;
+    isSearchActive: boolean;
 }
 
 export default function FriendBar({
@@ -29,8 +36,13 @@ export default function FriendBar({
     selectedChat,
     friends,
     pending,
+    friendListSearchInputvalue,
     handlePendingAccept,
     handlePendingDecline,
+    handleFriendListSearchInput,
+    clearSearch,
+    isSearching,
+    isSearchActive,
 }: Props) {
     const [openPending, setOpenPending] = useState(false);
     const { theme } = useGlobalState();
@@ -42,32 +54,37 @@ export default function FriendBar({
     return (
         <FriendBarStyled
             theme={theme}
-            style={{
-                width: "300px",
-                borderRight: "1px solid #ddd",
-                padding: "20px",
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-            }}
+            className={`friend-bar ${
+                !!selectedChat ? "chat-selected" : "chat-closed"
+            }`}
         >
             <div className="flex flex-col flex-1">
-                <input
-                    type="text"
-                    placeholder="Search"
-                    style={{
-                        width: "100%",
-                        padding: "10px",
-                        marginBottom: "20px",
-                        borderRadius: "8px",
-                        border: "1px solid #ddd",
-                    }}
-                />
-                <ul
-                    className="friend-list"
-                    style={{ listStyleType: "none", padding: 0 }}
-                >
-                    {friends.length > 0 &&
+                <div className="relative">
+                    <input
+                        id="friend-list-searh-input"
+                        type="text"
+                        placeholder="Search"
+                        className="search-input"
+                        value={friendListSearchInputvalue}
+                        onChange={(e) =>
+                            handleFriendListSearchInput(e.target.value)
+                        }
+                    />
+                    {isSearchActive && (
+                        <div
+                            className="search-input-close-icon"
+                            onClick={clearSearch}
+                        >
+                            {xmarkIcon}
+                        </div>
+                    )}
+                </div>
+                <ul className="friend-list">
+                    {isSearchActive && friends.length == 0 && (
+                        <SkeletonLoader classNames="friend-list-item list-item relative overflow-hidden h-[60px]" />
+                    )}
+                    {!isSearching &&
+                        friends.length > 0 &&
                         friends.map((friend: FriendInterface, index) => (
                             <li
                                 onClick={() => handleSelectedChat(friend)}
@@ -82,6 +99,9 @@ export default function FriendBar({
                                         className="user-avatar"
                                         src={friend.data.profile_picture_url}
                                         alt={`${friend.data.name} profile pic`}
+                                        width={30}
+                                        height={30}
+                                        loading="lazy"
                                     />
                                 </div>
                                 <div className="user-chat-info">
@@ -108,7 +128,7 @@ export default function FriendBar({
                             </li>
                         ))}
                 </ul>
-                <div className="border rounded-lg">
+                <div className="border rounded-lg pending-requests-wrapper">
                     <div
                         onClick={handleopenPending}
                         className="flex flex-row justify-between p-2 cursor-pointer"
@@ -126,7 +146,7 @@ export default function FriendBar({
                         >
                             {pending.length > 0 &&
                                 pending.map(
-                                    (friend: FriendPendingInterface, index) => (
+                                    (friend: FriendPendingInterface) => (
                                         <li
                                             key={friend.id}
                                             className="pending-request-item list-item"
@@ -136,9 +156,11 @@ export default function FriendBar({
                                                     className="user-avatar"
                                                     src={
                                                         friend.sender
-                                                            .profile_picture_url
+                                                            .profile_picture_url ||
+                                                        ""
                                                     }
                                                     alt={`${friend.sender.name} profile pic`}
+                                                    loading="lazy"
                                                 />
                                             </div>
                                             <div className="pending-request-item-content">
@@ -180,7 +202,32 @@ export default function FriendBar({
 }
 
 const FriendBarStyled = styled.aside`
-    background-color: ${(props) => props.theme.colorBg3};
+    background-color: ${(props) => props.theme.colorBg};
+    border-top-left-radius: 14px;
+    border-bottom-left-radius: 14px;
+    width: 300px;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+
+    .search-input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        background-color: ${(props) => props.theme.colorBg2};
+    }
+
+    .search-input-close-icon {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 11px;
+        color: ${(props) => props.theme.colorTextPrimary};
+    }
 
     .user-avatar-container {
         max-width: 40px;
@@ -193,26 +240,30 @@ const FriendBarStyled = styled.aside`
     }
 
     .list-item {
-        background-color: ${(props) => props.theme.colorBg2};
+        background-color: ${(props) => props.theme.colorBg3};
         transition: all 0.55s ease-in-out;
     }
 
     .list-item:hover,
     .selected {
-        background-color: ${(props) => props.theme.colorBg};
+        background-color: ${(props) => props.theme.colorBg3};
         transition: all 0.55s ease-in-out;
-        box-shadow: inset 0 0 10px ${(props) => props.theme.colorButtonPrimary};
+        box-shadow: inset 0 0 10px ${(props) => props.theme.colorBg4};
     }
 
     .user-avatar {
         width: 40px;
         height: 40px;
+        aspect-ratio: 1;
+        object-fit: cover;
         border-radius: 50%;
         margin-right: 10px;
     }
 
     .friend-list {
         flex: 1 1 0;
+        list-style-type: none;
+        padding: 0;
         overflow: auto;
     }
 
@@ -225,6 +276,7 @@ const FriendBarStyled = styled.aside`
         align-items: center;
 
         .user-chat-info {
+            display: grid;
             font-size: 14px;
             font-weight: 600;
 
@@ -234,8 +286,10 @@ const FriendBarStyled = styled.aside`
                 font-weight: 400;
                 display: -webkit-box;
                 -webkit-box-orient: vertical;
-                overflow: hidden;
                 -webkit-line-clamp: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
         }
 
@@ -264,6 +318,12 @@ const FriendBarStyled = styled.aside`
     }
 
     .friend-list-item:hover {
+    }
+
+    .pending-requests-wrapper {
+        color: ${(props) => props.theme.colorTextPrimary};
+        background-color: ${(props) => props.theme.colorBg2};
+        border: 2px solid ${(props) => props.theme.colorBg3};
     }
 
     .pending-requests-list {
