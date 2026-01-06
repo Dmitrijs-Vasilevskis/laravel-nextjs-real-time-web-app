@@ -1,24 +1,28 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FriendInterface } from "@/types/User/Firendship";
 import { DirectMessageInterface } from "@/types/DirectMessage/DirectMessage";
 import { axios } from "../lib/axios";
 import { sendReadMessageRequest } from "@/services/api/messages";
+import { useFriendshipContext } from "../context/friendshipContext";
+import { useEcho } from "./echo";
+import { useGlobalState } from "../context/globalProvider";
 
 export const useChat = () => {
+    const { user } = useGlobalState();
+    const echo = useEcho();
+    const { selectedChat, handleSelectChat } = useFriendshipContext();
+
     const [messages, setMessages] = useState<DirectMessageInterface[]>([]);
-    const [selectedChat, setSelectedChat] = useState<FriendInterface | null>(
-        null
-    );
     const chatBoxRef = useRef<HTMLDivElement>(null);
     const [page, setPage] = useState<number>(1);
     const [loadingMore, setLoadingMore] = useState<boolean>(false);
     const [hasMore, setHasMore] = useState<boolean>(true);
 
-    const handleCloseChatBox = () => {
-        setSelectedChat(null);
+    const closeChatBox = useCallback(() => {
+        handleSelectChat(null);
         setMessages([]);
         setPage(1);
-    };
+    }, []);
 
     const fetchMessages = () => {
         if (!selectedChat?.chat || !chatBoxRef.current) return;
@@ -73,25 +77,21 @@ export const useChat = () => {
         }
     };
 
-    const handleSendDirectMessage = (message: string) => {
+    const sendDirectMessage = (message: string) => {
         if (!selectedChat?.chat || !message) return;
 
-        axios
-            .post("api/send-direct-message", {
-                receiver_id: selectedChat.data.id,
-                chat_id: selectedChat.chat.id,
-                message: message,
-            })
-            .then((response: { data: DirectMessageInterface }) => {
-                if (response.data) {
-                    setMessages((prevMessages) => [
-                        ...prevMessages,
-                        response.data,
-                    ]);
-                }
-            });
+        axios.post("api/send-direct-message", {
+            receiver_id: selectedChat.data.id,
+            chat_id: selectedChat.chat.id,
+            message: message,
+        });
     };
 
+    const handleAddNewMessages = (message: DirectMessageInterface) => {
+        setMessages((prev) => [...prev, message]);
+    };
+
+    // todo: optimize message find, looking for in ascending order
     const handleIsMessageRead = (message_id: number) => {
         setMessages((prev) =>
             prev.map((message) => {
@@ -106,10 +106,7 @@ export const useChat = () => {
         );
     };
 
-    const handleReadMessageRequest = async (
-        messageId: number,
-        senderId: number
-    ) => {
+    const readMessageRequest = async (messageId: number, senderId: number) => {
         if (!messageId && !senderId) return;
 
         try {
@@ -144,6 +141,26 @@ export const useChat = () => {
     }, [page]);
 
     useEffect(() => {
+        if (echo && selectedChat && user.id) {
+            const dmChannel = echo.private(`direct-message.${user?.id}`);
+
+            dmChannel
+                .listen(
+                    ".direct-message.message",
+                    (data: { message: DirectMessageInterface }) => {
+                        data.message && handleAddNewMessages(data.message);
+                    }
+                )
+                .listen(
+                    ".direct-message.read",
+                    (data: { messageId: number; receiverId: number }) => {
+                        data.messageId && handleIsMessageRead(data.messageId);
+                    }
+                );
+        }
+    }, [echo, selectedChat]);
+
+    useEffect(() => {
         if (chatBoxRef.current) {
             chatBoxRef.current.addEventListener("scroll", handleScroll);
         }
@@ -158,10 +175,11 @@ export const useChat = () => {
         selectedChat,
         messages,
         chatBoxRef,
-        setSelectedChat,
-        handleSendDirectMessage,
-        handleReadMessageRequest,
-        handleCloseChatBox,
-        setMessages
+        handleSelectChat,
+        sendDirectMessage,
+        readMessageRequest,
+        handleIsMessageRead,
+        closeChatBox,
+        setMessages,
     };
 };
