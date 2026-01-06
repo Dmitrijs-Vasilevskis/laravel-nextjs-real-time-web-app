@@ -9,18 +9,22 @@
   --color-btn-secondaty: #53535f61;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+[data-theme="dark"] .root {
+  --background: #0E0E10;
+  --foreground: #ededed;
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
-  height: 100vh;
 }
 
 iframe {
@@ -34,7 +38,9 @@ iframe {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: auto;
+  min-height: 100vh;
+  background-color: var(--background);
 }
 
 .player-container {
@@ -43,25 +49,16 @@ iframe {
 
 /* Main container styles */
 .main-container {
-
   flex-grow: 1;
-  /* Center the content with auto margin */
-  margin: 0 auto;
-
-  /* Provide padding and ensure it scales down on smaller screens */
-  padding: 1rem;
-
-  /* Responsive max width */
-  max-width: 1280px;
-  
-  /* Flex layout for potential child components */
+  margin-right: auto;
+  margin-left: auto;
+  padding: 0 1rem;
+  max-width: 1320px;
+  min-height: 400px;
   display: flex;
   flex-direction: row;
   align-items: center;
-
-  /* Background and other styling */
-  background-color: #f9f9f9;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
   border-radius: 14px;
 }
 
@@ -70,12 +67,11 @@ iframe {
 }
 
 .btn-primary {
-  text-transform: uppercase;
   font-size: 0.75rem;
   line-height: 1rem;
   font-weight: 700;
   background-color: #5c16c5;
-  border-radius: 14px;
+  border-radius: 4px;
 }
 
 .btn-primary:hover {
@@ -102,7 +98,7 @@ iframe {
 @media (min-width: 1024px) and (max-width: 1279px) {
   .main-container {
     width: auto;
-    padding: 2rem;
+    padding: 0 2rem;
     margin: 0 1rem;
   }
 }
@@ -110,7 +106,7 @@ iframe {
 /* Media query for medium screens */
 @media (min-width: 768px) and (max-width: 1023px) {
   .main-container {
-    padding: 1.5rem;
+    padding: 0 1.5rem;
     margin: 0 2rem;
     flex-direction: column;
   }
