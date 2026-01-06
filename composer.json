@@ -6,10 +6,14 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "artisaninweb/laravel-soap": "^0.3.0",
+        "laminas/laminas-soap": "^2.14",
         "laravel/framework": "^11.9",
         "laravel/reverb": "^1.0",
         "laravel/sanctum": "^4.0",
-        "laravel/tinker": "^2.9"
+        "laravel/tinker": "^2.9",
+        "robrichards/wse-php": "^2.0",
+        "robrichards/xmlseclibs": "^3.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
