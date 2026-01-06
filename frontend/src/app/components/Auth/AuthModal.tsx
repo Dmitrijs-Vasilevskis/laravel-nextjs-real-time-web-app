@@ -6,6 +6,7 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { AuthFormType } from "@/types/Auth/Auth";
+import { useGlobalState } from "@/app/context/globalProvider";
 
 interface Props {
     handleOpenAuthModal: () => void;
@@ -17,6 +18,7 @@ export default function AuthModal({
     preselectedFormType,
 }: Props) {
     const [formType, setFormType] = useState<AuthFormType>("login");
+    const { theme } = useGlobalState();
 
     useMemo(() => {
         if (preselectedFormType) {
@@ -28,19 +30,6 @@ export default function AuthModal({
         setFormType(newFormType);
     };
 
-    const renderForm = () => {
-        switch (formType) {
-            case "login":
-                return <LoginForm handleFormType={handleFormType} />;
-            case "register":
-                return <RegistrationForm handleFormType={handleFormType} />;
-            case "forgotPassword":
-                return <ForgotPasswordForm handleFormType={handleFormType} />;
-            default:
-                return <LoginForm handleFormType={handleFormType} />;
-        }
-    };
-
     const formComponents: Record<AuthFormType, JSX.Element> = {
         login: <LoginForm handleFormType={handleFormType} />,
         register: <RegistrationForm handleFormType={handleFormType} />,
@@ -48,7 +37,7 @@ export default function AuthModal({
     };
 
     return (
-        <ModalStyled>
+        <ModalStyled theme={theme}>
             <div className="modal-overlay" onClick={handleOpenAuthModal}></div>
             <div className="absolute -ml-40 -mt-40 w-80 h-auto p-4 left-1/2 top-1/2 border border-gray-600 rounded-lg bg-gray-700">
                 {formComponents[formType]}
@@ -58,23 +47,67 @@ export default function AuthModal({
 }
 
 const ModalStyled = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  z-index: 100;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  .modal-overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.45);
-    filter: blur(4px);
-  }
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.45);
+        filter: blur(4px);
+    }
+
+    .form-wrapper {
+        .form-input {
+            color: ${(props) => props.theme.colorTextLight} !important;
+
+            &::placeholder {
+                color: ${(props) => props.theme.colorTextLight} !important;
+            }
+        }
+
+        .form-input:focus {
+            &::placeholder {
+                opacity: 0.7;
+            }
+        }
+
+        label.label-border-color {
+            color: ${(props) => props.theme.colorTextLight} !important;
+        }
+
+        .peer:focus ~ label.label-border-color,
+        .peer:not(:placeholder-shown) ~ label.label-border-color {
+            color: ${(props) => props.theme.colorTextLight} !important;
+        }
+
+        .peer:focus ~ label.label-border-color::before,
+        .peer:focus ~ label.label-border-color::after {
+            border-color: ${(props) => props.theme.inputBorderColor} !important;
+        }
+
+        .peer:focus {
+            border-left-color: ${(props) =>
+                props.theme.inputBorderColor} !important;
+            border-right-color: ${(props) =>
+                props.theme.inputBorderColor} !important;
+            border-bottom-color: ${(props) =>
+                props.theme.inputBorderColor} !important;
+            transition: border-color 0.2s ease;
+        }
+
+        .peer:focus ~ label.label-border-color {
+            color: ${(props) => props.theme.colorTextLight} !important;
+        }
+    }
 `;

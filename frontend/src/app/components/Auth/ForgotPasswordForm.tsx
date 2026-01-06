@@ -31,37 +31,40 @@ export default function ForgotPasswordForm({ handleFormType }: Props) {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="align-center">
-        <h3 className="text-2xl font-bold mb-4 text-white ">
-          Email Password Reset
-        </h3>
+      <div className="w-full h-full flex flex-col">
+          <div className="align-center">
+              <h3 className="text-2xl font-bold mb-4 text-white ">
+                  Email Password Reset
+              </h3>
 
-        <p className="text-l font-normal mb-4 text-white ">
-          Forgot your password? No problem. Just let us know your email address
-          and we will email you a password reset link that will allow you to
-          choose a new one.
-        </p>
+              <p className="text-l font-normal mb-4 text-white ">
+                  Forgot your password? No problem. Just let us know your email
+                  address and we will email you a password reset link that will
+                  allow you to choose a new one.
+              </p>
+          </div>
+          <form onSubmit={onFormSubmit} className="form-wrapper">
+              <div className="flex flex-col gap-3">
+                  <Input
+                      label="Email"
+                      type="email"
+                      placeholder="Email"
+                      name="email"
+                      id="email"
+                      onChange={(e) => setEmail(e.target.value)}
+                      crossOrigin={"anonymous"}
+                      className="form-input"
+                      labelProps={{
+                          className: "label-border-color",
+                      }}
+                  />
+              </div>
+              <div className="flex flex-col justify-center pt-4">
+                  <Button type="submit" color="gray">
+                      Email Password Reset Link
+                  </Button>
+              </div>
+          </form>
       </div>
-      <form onSubmit={onFormSubmit}>
-        <div className="flex flex-col gap-3">
-          <Input
-            label="Email"
-            color="white"
-            type="email"
-            placeholder="Email"
-            name="email"
-            id="email"
-            onChange={(e) => setEmail(e.target.value)}
-            crossOrigin={"anonymous"}
-          />
-        </div>
-        <div className="flex flex-col justify-center pt-4">
-          <Button type="submit" color="gray">
-            Email Password Reset Link
-          </Button>
-        </div>
-      </form>
-    </div>
   );
 }

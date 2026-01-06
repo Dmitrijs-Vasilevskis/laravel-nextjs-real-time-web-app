@@ -24,7 +24,7 @@ export default function RegistrationForm({ handleFormType }: Props) {
     redirectIfAuthenticated: "/",
   });
 
-  const { user, handleOpenAuthModal } = useGlobalState();
+  const { handleOpenAuthModal } = useGlobalState();
 
   const [formData, setFormData] = useState<FormData>({
       userName: "",
@@ -41,62 +41,63 @@ export default function RegistrationForm({ handleFormType }: Props) {
   };
 
   const validateForm = () => {
-    let isValid = true;
+      let isValid = true;
 
-    if (!formData.userName) {
-        toast.error("Username is required");
-        isValid = false;
-    }
+      if (!formData.userName) {
+          toast.error("Username is required");
+          isValid = false;
+      }
 
-    if (!formData.email) {
-        toast.error("Email is required");
-        isValid = false;
-    }
+      if (!formData.email) {
+          toast.error("Email is required");
+          isValid = false;
+      }
 
-    if (!formData.password) {
-        toast.error("Password is required");
-        isValid = false;
-    }
+      if (!formData.password) {
+          toast.error("Password is required");
+          isValid = false;
+      }
 
-    if (!formData.confirmPassword) {
-        toast.error("Confirm Password is required");
-        isValid = false;
-    }
+      if (!formData.confirmPassword) {
+          toast.error("Confirm Password is required");
+          isValid = false;
+      }
 
-    if (formData.password !== formData.confirmPassword) {
-        toast.error("Passwords do not match");
-        isValid = false;
-    }
+      if (formData.password !== formData.confirmPassword) {
+          toast.error("Passwords do not match");
+          isValid = false;
+      }
 
-    return isValid;
+      return isValid;
   };
 
   const onFormSubmit = (e: any) => {
-    e.preventDefault();
+      e.preventDefault();
 
-    if (validateForm()) {
-      register({
-          name: formData.userName,
-          email: formData.email,
-          password: formData.password,
-          password_confirmation: formData.confirmPassword,
-          setErrors,
-      }).then(() => {
-          handleOpenAuthModal();
-      });
-    }
+      if (validateForm()) {
+          register({
+              name: formData.userName,
+              email: formData.email,
+              password: formData.password,
+              password_confirmation: formData.confirmPassword,
+              setErrors,
+          }).then(() => {
+              handleOpenAuthModal();
+          });
+      }
   };
 
   return (
       <div className="w-full h-full flex flex-col">
           <div className="align-center">
-              <h3 className="text-2xl font-bold mb-4 text-white ">Registration </h3>
+              <h3 className="text-2xl font-bold mb-4 text-white ">
+                  Registration{" "}
+              </h3>
           </div>
-          <form onSubmit={onFormSubmit}>
+          <form onSubmit={onFormSubmit} className="form-wrapper"> 
               <div className="flex flex-col gap-3">
                   <Input
                       label="Username"
-                      color="white"
                       type="text"
                       placeholder="Username"
                       name="userName"
@@ -105,10 +106,14 @@ export default function RegistrationForm({ handleFormType }: Props) {
                       value={formData.userName}
                       onChange={handleChange}
                       crossOrigin={"anonymous"}
+                      className="form-input"
+                        labelProps={{
+                            className:
+                                "label-border-color",
+                        }}
                   />
                   <Input
                       label="Email"
-                      color="white"
                       type="email"
                       placeholder="Email"
                       name="email"
@@ -117,10 +122,14 @@ export default function RegistrationForm({ handleFormType }: Props) {
                       value={formData.email}
                       onChange={handleChange}
                       crossOrigin={"anonymous"}
+                      className="form-input"
+                        labelProps={{
+                            className:
+                                "label-border-color",
+                        }}
                   />
                   <Input
                       label="Password"
-                      color="white"
                       type="password"
                       placeholder="Password"
                       name="password"
@@ -129,10 +138,14 @@ export default function RegistrationForm({ handleFormType }: Props) {
                       value={formData.password}
                       onChange={handleChange}
                       crossOrigin={"anonymous"}
+                      className="form-input"
+                        labelProps={{
+                            className:
+                                "label-border-color",
+                        }}
                   />
                   <Input
                       label="Password confirm"
-                      color="white"
                       type="password"
                       placeholder="Password confirm"
                       name="confirmPassword"
@@ -141,14 +154,19 @@ export default function RegistrationForm({ handleFormType }: Props) {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       crossOrigin={"anonymous"}
+                      className="form-input"
+                        labelProps={{
+                            className:
+                                "label-border-color",
+                        }}
                   />
               </div>
               <div className="flex flex-col justify-center pt-4">
-                  <Button type="submit" color="gray">
+                  <Button type="submit">
                       Registration
                   </Button>
                   <div className="text-white text-center mt-2 font-normal text-sm flex flex-col">
-                      <span>Already have an account?</span>
+                      <p>Already have an account?</p>
                       <a
                           className="cursor-pointer"
                           onClick={() => handleFormType("login")}

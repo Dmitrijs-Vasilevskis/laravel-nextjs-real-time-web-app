@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/app/hooks/auth";
 import { useGlobalState } from "@/app/context/globalProvider";
 import { AuthFormType } from "@/types/Auth/Auth";
+import { UserInterface } from "@/types/User/User";
 
 interface Props {
   handleFormType: (newFormType: AuthFormType) => void;
@@ -64,7 +65,7 @@ export default function LoginForm({ handleFormType }: Props) {
                 remember: shouldRemember,
                 setErrors,
                 setStatus,
-            }).then((user: any) => {
+            }).then((user: UserInterface) => {
                 if (user.name) {
                     handleOpenAuthModal();
                     toast.success("Succsfully logged in");
@@ -78,21 +79,24 @@ export default function LoginForm({ handleFormType }: Props) {
             <div className="align-center">
                 <h3 className="text-2xl font-bold mb-4 text-white ">Login</h3>
             </div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="form-wrapper">
                 <div className="flex flex-col gap-3">
                     <Input
                         label="Email"
-                        color="white"
                         type="email"
                         placeholder="Email"
                         name="email"
                         id="email"
                         onChange={handleChange}
                         crossOrigin={"anonymous"}
+                        className="form-input"
+                        labelProps={{
+                            className:
+                                "label-border-color",
+                        }}
                     />
                     <Input
                         label="Password"
-                        color="white"
                         type="password"
                         placeholder="Password"
                         autoComplete="off"
@@ -100,10 +104,15 @@ export default function LoginForm({ handleFormType }: Props) {
                         id="password"
                         onChange={handleChange}
                         crossOrigin={"anonymous"}
+                        className="form-input"
+                        labelProps={{
+                            className:
+                                "label-border-color",
+                        }}
                     />
                 </div>
                 <div className="flex flex-col justify-center pt-4">
-                    <Button type="submit" color="gray">
+                    <Button type="submit">
                         Sign in
                     </Button>
                     <a
