@@ -9,6 +9,7 @@ import MySessions from "../components/MyAccount/Tabs/Sessions/MySessions";
 import { useAuth } from "../hooks/auth";
 import Link from "next/link";
 import MyFriends from "../components/MyAccount/Tabs/Friends/MyFriends";
+import { useGlobalState } from "../context/globalProvider";
 
 export default function MyAccountPage() {
     const { user } = useAuth({
@@ -16,12 +17,10 @@ export default function MyAccountPage() {
         redirectIfAuthenticated: "/",
     });
 
+    const { theme } = useGlobalState();
+
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<string>("profile");
-
-    const handleTabSwitch = (tab: string) => {
-        setActiveTab(tab);
-    };
 
     const isTabActive = (tab: string) => {
         return !!activeTab.includes(tab);
@@ -45,11 +44,11 @@ export default function MyAccountPage() {
     }, [searchParams.get("tab")]);
 
     return (
-        <MyAccountStyled className="main-container">
-            <header className="my-account-header">
+        <MyAccountStyled theme={theme} className="main-container">
+            <div className="my-account-header">
                 <div>
-                    <ul className="inline-grid grid-flow-col border-b">
-                        <li className="tab-item-container">
+                    <ul className="inline-grid grid-flow-col tab-wrapper">
+                        <li>
                             <Link
                                 href={{
                                     pathname: "my-account",
@@ -59,7 +58,7 @@ export default function MyAccountPage() {
                                     isTabActive("profile") ? "active" : ""
                                 }`}
                             >
-                                My Profile
+                                <span className="tab-text">My Profile</span>
                             </Link>
                         </li>
                         <li>
@@ -90,7 +89,7 @@ export default function MyAccountPage() {
                         </li>
                     </ul>
                 </div>
-            </header>
+            </div>
             {user && <div className="main-wrapper">{handleRenderTab()}</div>}
         </MyAccountStyled>
     );
@@ -99,58 +98,20 @@ export default function MyAccountPage() {
 const MyAccountStyled = styled.div`
     display: flex;
     flex-direction: column;
+    color: ${(props) => props.theme.colorTextPrimary};
+    padding-bottom: 1rem;
 
     .main-wrapper {
         width: 100%;
         height: 100%;
     }
 
+    .main-content {
+        min-height: 75vh;
+    }
+
     .my-account-header {
-        margin: 1rem 0;
-    }
-
-    .section-item-container {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .section-item-content {
-        margin: 0 1rem;
-        display: flex;
-        width: 100%;
-    }
-
-    .section-item-actions {
-        display: flex;
-    }
-
-    .section-input {
-        width: 100%;
-    }
-
-    .image-preview-container {
-        min-width: 6rem;
-        align-content: center;
-    }
-
-    .image-preview-icon {
-        font-size: 63px;
-        text-align: center;
-        border: 1px solid black;
-        border-radius: 9999px;
-        // display: flex;
-        // justify-content: center;
-    }
-
-    .section-item-header {
-        align-content: center;
-        width: 18rem;
-    }
-
-    .tab-item-container {
-        padding: 2px;
+        margin: 0 1rem 1rem 1rem;
     }
 
     .tab-text {
@@ -176,7 +137,8 @@ const MyAccountStyled = styled.div`
         content: "";
         bottom: -2px;
         display: block;
-        width: 100%;
+        justify-self: center;
+        width: calc(100% - 20px);
         height: 0px;
         background-color: #bf94ff;
     }

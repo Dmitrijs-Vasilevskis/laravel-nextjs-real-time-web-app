@@ -17,7 +17,7 @@ import {
 import { VideoSessionInterface } from "@/types/VideoSession/VideoSession";
 
 export default function MySessions() {
-    const { user } = useGlobalState();
+    const { user, theme } = useGlobalState();
     const router = useRouter();
     const [sessions, setSessions] = useState<VideoSessionInterface[]>();
     const [openModal, setOpenModal] = useState(false);
@@ -100,7 +100,7 @@ export default function MySessions() {
     }, [user]);
 
     return (
-        <MySessionStyled>
+        <MySessionStyled theme={theme} className="main-content">
             <Dialog
                 className="flex flex-row"
                 id="create-session-modal"
@@ -126,7 +126,7 @@ export default function MySessions() {
                     <span className="">Create</span>
                 </button>
             </Dialog>
-            <div className="section-header">
+            <div className="section-header m-4">
                 <Typography variant="h3">Active Sessions</Typography>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
@@ -134,13 +134,13 @@ export default function MySessions() {
                     sessions.map((session) => (
                         <div
                             key={session.id}
-                            className="box-shadow border h-64 rounded-lg flex flex-col p-4 shadow-sm hover:shadow-lg transition-shadow"
+                            className="session-item-wrapper box-shadow border h-64 rounded-lg flex flex-col p-4 shadow-sm hover:shadow-lg transition-shadow"
                         >
                             <div
                                 onClick={() =>
                                     handleSaveToClipBoard(session.session_id)
                                 }
-                                className="flex flex-col text-center justify-center flex-grow bg-blur leading-6 cursor-pointer"
+                                className="session-item flex flex-col text-center justify-center flex-grow leading-6 cursor-pointer"
                             >
                                 <div className="w-full">
                                     <p className="text-lg">Session id:</p>
@@ -152,22 +152,22 @@ export default function MySessions() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="mt-4 flex flex-row justify-around">
+                            <div className="mt-4 flex md:flex-row justify-around gap-2 flex-col">
                                 <button
                                     onClick={() =>
                                         handleJoinSession(session.session_id)
                                     }
-                                    className="btn-primary px-6 py-2"
+                                    className="btn-primary px-6 py-2 w-full"
                                 >
-                                    <span>Join Session</span>
+                                    <span>Enter</span>
                                 </button>
                                 <button
                                     onClick={() =>
                                         handleDeleteSession(session.session_id)
                                     }
-                                    className="btn-primary delete px-6 py-2"
+                                    className="btn-primary delete px-6 py-2 w-full"
                                 >
-                                    <span>Delete Session</span>
+                                    <span>Delete</span>
                                 </button>
                             </div>
                         </div>
@@ -182,19 +182,34 @@ export default function MySessions() {
 }
 
 const MySessionStyled = styled.div`
+    background-color: ${(props) => props.theme.colorBg};
+    height: 100%;
+    border-radius: 14px;
+    border: 1px solid;
+    padding: 1rem;
+
+    .session-item-wrapper {
+        background-color: ${(props) => props.theme.colorBg2};
+
+        .session-item {
+            background-color: ${(props) => props.theme.colorBg3};
+            color: ${(props) => props.theme.colorTextPrimary};
+            border-radius: 14px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .btn-primary {
+            color: ${(props) => props.theme.colorTextSecondary};
+        }
+    }
+
     .delete {
         background-color: rgba(83, 83, 95, 0.38);
     }
 
     .delete:hover {
         background-color: rgba(83, 83, 95, 0.9);
-    }
-
-    .bg-blur {
-        background-color: #f9f9f96b;
-        color: #f9f9f969;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
     }
 
     .box-shadow {

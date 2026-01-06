@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import NicknameColorInput from "@/app/components/ColorPicker/ColorPicker";
 import { UserInterface } from "@/types/User/User";
 export default function MyProfile() {
-    const { user } = useGlobalState();
+    const { user, theme } = useGlobalState();
 
     const [formdata, setFormData] = useState({
         username: user?.name || "",
@@ -112,7 +112,7 @@ export default function MyProfile() {
     }, [user]);
 
     return (
-        <MyAccountStyled className="main-wrapper">
+        <MyAccountStyled theme={theme} className="main-content">
             {/* Profile Picture section*/}
             <section className="section-tab ">
                 <div className="section-header">
@@ -203,43 +203,43 @@ export default function MyProfile() {
                         Chat settings & customizations
                     </Typography>
                 </div>
-                <div className="section-item-container">
-                    <div className="section-item-header">
-                        <span>Username color </span>
-                    </div>
-                    <div className="section-item-content flex-row">
-                        <div className="section-item-actions gap-2">
-                            <div className="flex relative grow">
-                                {isColorPickerOpen && (
-                                    <NicknameColorInput
-                                        handleColorChange={handleColorChange}
-                                        color={color}
-                                        getTextColorStyle={getTextColorStyle}
-                                    />
-                                )}
-                                <Input
-                                    crossOrigin={"anonymous"}
-                                    defaultValue={user?.name}
-                                    label="Color sample"
-                                    type="text"
-                                    style={getTextColorStyle()}
-                                    name="userNameColor"
-                                    readOnly
-                                />
-                                <button
-                                    className="palette-icon"
-                                    onClick={handleOpenColorPicker}
-                                >
-                                    {paletteIcon}
-                                </button>
-                            </div>
-                            <Button
-                                onClick={handleUpdateNicknameColor}
-                                className="btn-primary flex-shrink-0"
-                            >
-                                <span>Update Chat Nickname Color</span>
-                            </Button>
+                <div className="section-item-container flex-col gap-2 md:flex-row md:gap-0">
+                    <div className="section-item-content">
+                        <div className="section-item-header">
+                            <span>Name color</span>
                         </div>
+                        <div className="flex relative grow mr-0 md:mr-2">
+                            {isColorPickerOpen && (
+                                <NicknameColorInput
+                                    handleColorChange={handleColorChange}
+                                    color={color}
+                                    getTextColorStyle={getTextColorStyle}
+                                />
+                            )}
+                            <Input
+                                crossOrigin={"anonymous"}
+                                defaultValue={user?.name}
+                                label="Color sample"
+                                type="text"
+                                style={getTextColorStyle()}
+                                name="userNameColor"
+                                readOnly
+                            />
+                            <button
+                                className="palette-icon"
+                                onClick={handleOpenColorPicker}
+                            >
+                                {paletteIcon}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="section-item-actions min-w-fit">
+                        <Button
+                            onClick={handleUpdateNicknameColor}
+                            className="btn-primary flex-shrink-0"
+                        >
+                            <span>Update Chat Nickname Color</span>
+                        </Button>
                     </div>
                 </div>
             </section>
@@ -248,36 +248,40 @@ export default function MyProfile() {
 }
 
 const MyAccountStyled = styled.div`
+    background-color: ${(props) => props.theme.colorBg};
+    color: ${(props) => props.theme.colorTextPrimary};
+    border-radius: 14px;
+    border: 1px solid;
+    padding: 1rem;
+    height: 100%;
+
     @media (max-width: 767px) {
-        .section-item-actions {
-            flex-direction: column;
+        .section-item-container {
+            .section-item-actions {
+                flex-direction: column;
+                width: 100%;
+            }
         }
-    }
-    
-    .main-wrapper {
-        width: 100%;
     }
 
     .section-header {
-        margin: 1rem 0;
+        margin: 1rem;
     }
 
     .section-item-container {
         display: flex;
-        flex-direction: row;
         align-items: center;
         margin-bottom: 1rem;
     }
 
     .section-item-content {
-        margin: 0 1rem;
         display: flex;
         width: 100%;
     }
 
     .section-item-actions {
         display: flex;
-        width: 100%;
+        width: auto;
     }
 
     .section-input {
@@ -287,18 +291,24 @@ const MyAccountStyled = styled.div`
     .image-preview-container {
         min-width: 6rem;
         align-content: center;
+        margin-left: 1rem;
+        margin-right: 1rem;
     }
 
     .image-preview-icon {
-        font-size: 63px;
+        font-size: 64px;
         text-align: center;
-        border: 1px solid black;
+        border: 1px solid;
+        border-color: ${(props) => props.theme.borderColor};
         border-radius: 9999px;
     }
 
     .section-item-header {
         align-content: center;
-        width: 18rem;
+        margin-right: 16px;
+        width: auto;
+        min-width: 100px;
+        max-width: 250px;
     }
 
     .palette-icon {
