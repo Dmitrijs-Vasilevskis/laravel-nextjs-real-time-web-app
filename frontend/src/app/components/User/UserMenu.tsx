@@ -9,10 +9,13 @@ import {
     Avatar,
     Typography,
     Button,
+    Switch,
 } from "@material-tailwind/react";
-import { user as userIcon } from "@/app/utils/icons";
+import { userIcon } from "@/app/utils/icons";
 import { useRouter } from "next/navigation";
 import { UserInterface } from "@/types/User/User";
+import { useGlobalState } from "@/app/context/globalProvider";
+import { useState } from "react";
 
 interface Props {
     user: UserInterface;
@@ -20,15 +23,21 @@ interface Props {
 export default function UserMenu({ user }: Props) {
     const router = useRouter();
     const { logout } = useAuth();
+    const { handleThemeSwitch, theme, selectedTheme } = useGlobalState();
+    const [menu, setMenu] = useState<boolean>(false);
 
     const handleNavigation = (path: string) => {
         router.push(path);
     };
 
+    const handleMenuOpen = () => {
+        setMenu(!menu);
+    };
+
     return (
-        <Menu>
+        <Menu open={menu} handler={handleMenuOpen}>
             <MenuHandler>
-                <Button>{userIcon}</Button>
+                <Button className="btn-primary">{userIcon}</Button>
             </MenuHandler>
             <MenuList className="" style={{ width: "100%" }} id="menu-list">
                 <MenuItem className="flex items-center gap-2" disabled>
@@ -118,6 +127,17 @@ export default function UserMenu({ user }: Props) {
                     <Typography variant="small" className="font-medium">
                         Help
                     </Typography>
+                </MenuItem>
+                <MenuItem>
+                    <Switch
+                        onChange={() => handleThemeSwitch()}
+                        label={
+                            <div>
+                                <Typography>Dark Theme</Typography>
+                            </div>
+                        }
+                        checked={!!selectedTheme}
+                    />
                 </MenuItem>
                 <hr className="my-2 border-blue-gray-50" />
                 <MenuItem onClick={logout} className="flex items-center gap-2 ">

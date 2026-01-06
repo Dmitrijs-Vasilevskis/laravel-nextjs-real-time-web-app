@@ -1,33 +1,55 @@
 "use client";
 
 import { useAuth } from "@/app/hooks/auth";
-import { MenuItem, Avatar, Typography, Button } from "@material-tailwind/react";
-import { user as userIcon } from "@/app/utils/icons";
+import {
+    MenuItem,
+    Avatar,
+    Typography,
+    Button,
+    Switch,
+} from "@material-tailwind/react";
+import { userIcon } from "@/app/utils/icons";
 import { useRouter } from "next/navigation";
 import { UserInterface } from "@/types/User/User";
+import { useGlobalState } from "@/app/context/globalProvider";
+import { useState } from "react";
+import styled from "styled-components";
 
 interface Props {
     user: UserInterface;
+    handleOpenMobileMenu: () => void;
 }
-export default function UserMenuMobile({ user }: Props) {
+
+export default function UserMenuMobile({ user, handleOpenMobileMenu }: Props) {
     const router = useRouter();
     const { logout } = useAuth();
+    const { handleThemeSwitch, theme, selectedTheme } = useGlobalState();
 
     const handleNavigation = (path: string) => {
         router.push(path);
     };
 
     return (
-        <ul className="" style={{ width: "100%" }} id="menu-list">
-            <MenuItem
-                className="flex items-center justify-center gap-2"
-                disabled
-            >
+        <UserMenuMobileStyled theme={theme} id="menu-list">
+            <div className="flex items-center justify-start gap-2 px-4 pt-4">
+                <div className="user-container">
+                    <Avatar
+                        variant="circular"
+                        src={user?.profile_picture_url || ""}
+                        alt={`${user?.name} profile pic`}
+                        width={30}
+                        height={30}
+                    />
+                </div>
                 <Typography variant="h6">{user?.name}</Typography>
-            </MenuItem>
+            </div>
+            <hr className="my-2 divider" />
             <MenuItem
-                onClick={() => handleNavigation("/my-account")}
-                className="flex items-center gap-2 justify-center"
+                onClick={() => {
+                    handleNavigation("/my-account");
+                    handleOpenMobileMenu();
+                }}
+                className="user-mobile-navigation-menu-item"
             >
                 <svg
                     width="16"
@@ -48,8 +70,11 @@ export default function UserMenuMobile({ user }: Props) {
                 </Typography>
             </MenuItem>
             <MenuItem
-                onClick={() => handleNavigation("/my-account?tab=sessions")}
-                className="flex justify-center items-center gap-2"
+                onClick={() => {
+                    handleNavigation("/my-account?tab=sessions");
+                    handleOpenMobileMenu();
+                }}
+                className="user-mobile-navigation-menu-item"
             >
                 <svg
                     width="16"
@@ -70,8 +95,11 @@ export default function UserMenuMobile({ user }: Props) {
                 </Typography>
             </MenuItem>
             <MenuItem
-                onClick={() => handleNavigation("/my-account?tab=friends")}
-                className="flex justify-center items-center gap-2"
+                onClick={() => {
+                    handleNavigation("/my-account?tab=friends");
+                    handleOpenMobileMenu();
+                }}
+                className="user-mobile-navigation-menu-item"
             >
                 <svg
                     width="16"
@@ -91,7 +119,7 @@ export default function UserMenuMobile({ user }: Props) {
                     My Friends
                 </Typography>
             </MenuItem>
-            <MenuItem className="flex justify-center items-center gap-2">
+            <MenuItem className="user-mobile-navigation-menu-item">
                 <svg
                     width="16"
                     height="16"
@@ -110,10 +138,28 @@ export default function UserMenuMobile({ user }: Props) {
                     Help
                 </Typography>
             </MenuItem>
-            <hr className="my-2 border-blue-gray-50" />
+            <MenuItem
+                className="user-mobile-navigation-menu-item"
+                onClick={handleThemeSwitch}
+            >
+                <Switch
+                    onClick={(e) => {
+                        e.stopPropagation();
+                    }}
+                    label={
+                        <div>
+                            <Typography className="switch-text">
+                                Dark Theme
+                            </Typography>
+                        </div>
+                    }
+                    checked={!!selectedTheme}
+                />
+            </MenuItem>
+            <hr className="my-2 divider" />
             <MenuItem
                 onClick={logout}
-                className="flex justify-center items-center gap-2 "
+                className="user-mobile-navigation-menu-item "
             >
                 <svg
                     width="16"
@@ -132,7 +178,33 @@ export default function UserMenuMobile({ user }: Props) {
                 <Typography variant="small" className="font-medium">
                     Sign Out
                 </Typography>
-            </MenuItem>{" "}
-        </ul>
+            </MenuItem>
+        </UserMenuMobileStyled>
     );
 }
+
+const UserMenuMobileStyled = styled.ul`
+    width: 100%;
+    background-color: ${(props) => props.theme.colorBg2};
+    color: ${(props) => props.theme.colorTextPrimary};
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-bottom: 2rem;
+
+    .divider {
+        border-color: ${(props) => props.theme.dividerColor};
+    }
+
+    .user-mobile-navigation-menu-item {
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .switch-text {
+        color: ${(props) => props.theme.colorTextPrimary};
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+`;
