@@ -21,13 +21,23 @@ export default function Navigation() {
     const handleOpenMobileMenu = () => setOpenMobileMenu((cur) => !cur);
 
     useEffect(() => {
-        window.addEventListener(
-            "resize",
-            () => window.innerWidth >= 960 && setOpenMobileMenu(false)
-        );
+        if (typeof window === "undefined") return;
+
+        const handleResize = () => {
+            if (window.innerWidth >= 960) {
+                setOpenMobileMenu(false);
+            }
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
     }, []);
 
     useEffect(() => {
+        if (typeof document === "undefined") return;
         if (openMobileMenu) {
             document.body.style.overflow = "hidden";
         } else {

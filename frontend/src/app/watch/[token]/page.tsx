@@ -333,6 +333,8 @@ export default function page() {
                 });
             };
 
+            if (typeof window === "undefined") return;
+
             /* @ts-ignore */
             if (!window.YT) {
                 const script = document.createElement("script");

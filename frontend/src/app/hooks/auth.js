@@ -125,7 +125,9 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
             await axios.post("/logout").then(() => {
                 mutate(undefined, false);
                 setIsAuthenticated(false);
-                window.location.pathname = "/";
+                if (typeof window !== "undefined") {
+                    window.location.pathname = "/";
+                }
             });
         } catch (error) {
             console.error(error);
@@ -136,6 +138,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
         if (middleware === "guest" && redirectIfAuthenticated && user)
             router.push(redirectIfAuthenticated);
         if (
+            typeof window !== "undefined" &&
             window.location.pathname === "/verify-email" &&
             user?.email_verified_at
         )

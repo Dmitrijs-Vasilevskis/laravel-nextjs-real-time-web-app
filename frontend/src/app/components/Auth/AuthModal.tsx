@@ -3,7 +3,7 @@
 import LoginForm from "./LoginForm";
 import RegistrationForm from "./RegistrationForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type JSX } from "react";
 import styled from "styled-components";
 import { AuthFormType } from "@/types/Auth/Auth";
 import { useGlobalState } from "@/app/context/globalProvider";

@@ -14,7 +14,7 @@ interface Props {
     messages: DirectMessageInterface[];
     handleReadMessageRequest: (message_id: number, sender_id: number) => void;
     handleSendDirectMessage: (message: string) => void;
-    chatBoxRef: React.RefObject<HTMLDivElement>;
+    chatBoxRef: React.RefObject<HTMLDivElement | null>;
     handleCloseChatBox?: () => void;
 }
 

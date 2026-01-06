@@ -3,7 +3,7 @@
 import styled from "styled-components";
 import { useGlobalState } from "@/app/context/globalProvider";
 import { AuthFormType } from "@/types/Auth/Auth";
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import MobileLoginForm from "./MobileLoginForm";
 import MobileRegistrationForm from "./MobileRegistrationForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";

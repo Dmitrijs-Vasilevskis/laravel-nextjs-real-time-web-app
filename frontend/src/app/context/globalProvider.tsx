@@ -19,7 +19,7 @@ interface GlobalContextInterface {
     user: UserInterface;
     openAuthModal: boolean;
     handleOpenAuthModal: () => void;
-    echo: Echo | null;
+    echo: Echo<any> | null;
     theme: Record<string, string>;
     selectedTheme: number;
     handleThemeSwitch: () => void;
@@ -44,6 +44,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     const theme = themes[selectedTheme];
 
     useEffect(() => {
+        if (typeof document === "undefined") return;
         const html = document.documentElement;
         html.setAttribute("data-theme", selectedTheme === 0 ? "light" : "dark");
     }, [selectedTheme]);

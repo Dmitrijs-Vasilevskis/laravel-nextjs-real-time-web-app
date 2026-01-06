@@ -1,5 +1,5 @@
 # Use official Node.js image
-FROM node:18-alpine
+FROM node:23-alpine
 
 # Set working directory
 WORKDIR /src

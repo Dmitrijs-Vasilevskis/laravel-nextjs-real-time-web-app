@@ -23,7 +23,7 @@ interface Props {
     }[];
     handleSendMessage: (message: string) => void;
     handleKeyDown: (e: any) => void;
-    chatBoxRef: React.RefObject<HTMLDivElement>;
+    chatBoxRef: React.RefObject<HTMLDivElement | null>;
     message: string;
     setMessage: React.Dispatch<React.SetStateAction<string>>;
 }

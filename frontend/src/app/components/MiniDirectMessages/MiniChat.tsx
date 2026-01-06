@@ -7,6 +7,7 @@ import MiniChatbox from "./MiniChatbox";
 import { useGlobalState } from "@/app/context/globalProvider";
 import { FriendInterface } from "@/types/User/Firendship";
 import { useFriendship } from "@/app/hooks/friendship";
+import Image from "next/image";
 
 export default function MiniChat() {
     const { theme, miniChatOpen, toggleMiniChat } = useGlobalState();

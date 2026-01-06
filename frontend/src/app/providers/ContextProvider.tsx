@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect } from "react";
 import { GlobalProvider } from "../context/globalProvider";
 import { Toaster } from "@/app/components/UI/Toaster";
