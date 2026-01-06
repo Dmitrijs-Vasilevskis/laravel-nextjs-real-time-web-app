@@ -9,9 +9,12 @@ import {
     instagramIcon,
     faceBookIcon,
 } from "@/app/utils/icons";
-import Link from "next/link";
+import styled from "styled-components";
+import { useGlobalState } from "@/app/context/globalProvider";
 
 export default function Footer() {
+    const { theme } = useGlobalState();
+
     const icons = [
         {
             icon: gitIcon,
@@ -29,9 +32,12 @@ export default function Footer() {
 
     return (
         <>
-            <footer className="footer bloc w-full mx-auto mt-4 mb-4 py-4 px-8 container">
-                <div className="flex flex-row">
-                    <div>
+            <FooterStyled
+                theme={theme}
+                className="footer bloc w-full mx-auto mt-4 mb-4 py-4 px-8 container"
+            >
+                <div className="flex flex-row justify-around mt-4">
+                    <div className="flex flex-row items-center">
                         <Image
                             src="/images/home-logo.png"
                             alt="Description of image"
@@ -40,32 +46,7 @@ export default function Footer() {
                             priority
                         />
                     </div>
-                    <div className="w-full">
-                        <ul className="flex flex-row h-full items-center float-right">
-                            <li className="mr-4">
-                                <div>
-                                    <Link href="/">Footer navigation</Link>
-                                </div>
-                            </li>
-                            <li className="mr-4">
-                                <div>
-                                    <Link href="/">Footer navigation</Link>
-                                </div>
-                            </li>
-                            <li className="mr-4">
-                                <div>
-                                    <Link href="/">Footer navigation</Link>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div className="flex flex-row justify-around mt-4">
-                    <Typography className="mb-4 text-center font-normal  md:mb-0 flex flex-row gap-4">
-                        Watch With ❤️
-                        <span>All rights reserved.</span>
-                    </Typography>
-                    <div className="flex flex-row">
+                    <div className="flex flex-row items-center">
                         {icons.map(({ icon }, key) => (
                             <Typography
                                 key={key}
@@ -79,7 +60,17 @@ export default function Footer() {
                         ))}
                     </div>
                 </div>
-            </footer>
+                <div className="flex justify-center">
+                    <Typography className="mb-4 text-center font-normal  md:mb-0 flex flex-row gap-4">
+                        Watch With ❤️
+                        <span>All rights reserved.</span>
+                    </Typography>
+                </div>
+            </FooterStyled>
         </>
     );
 }
+
+const FooterStyled = styled.footer`
+    color: ${(props) => props.theme.colorTextPrimary};
+`;

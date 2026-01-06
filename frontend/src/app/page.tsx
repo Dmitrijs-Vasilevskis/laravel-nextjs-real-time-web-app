@@ -8,10 +8,10 @@ import { Typography, Button } from "@material-tailwind/react";
 import Image from "next/image";
 
 export default function Home() {
-    const { handleOpenAuthModal, user } = useGlobalState();
+    const { handleOpenAuthModal, user, theme } = useGlobalState();
 
     return (
-        <HomePageStyled className="main-container">
+        <HomePageStyled theme={theme} className="main-container">
             <div className="main-logo">
                 <Image
                     src="/images/home-logo.png"
@@ -45,7 +45,7 @@ export default function Home() {
                         ) : (
                             <div>
                                 <Button
-                                    className="login-button"
+                                    className="btn-primary"
                                     onClick={handleOpenAuthModal}
                                 >
                                     Login to start
@@ -60,23 +60,12 @@ export default function Home() {
 }
 
 const HomePageStyled = styled.div`
+  background-color: ${(props) => props.theme.colorBg};
+  color: ${(props) => props.theme.colorTextPrimary};
+
   .main-logo {
     aspect-ratio: 4 / 3;
     justify-items: center;
-  }
-
-  .login-button {
-    background-color: #5c16c5;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    color: #fff;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-
-  .login-button::hover {
-    background-color: #772ce8
   }
 
   .home-container {
