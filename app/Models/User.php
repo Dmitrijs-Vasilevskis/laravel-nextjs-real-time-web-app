@@ -48,16 +48,16 @@ class User extends Authenticatable
         ];
     }
 
-    public function friends()
+    public function friendships()
     {
         return $this->hasMany(Friendship::class, 'user_id')
-        ->where('status', 'accepted');
+            ->where('status', 'accepted');
     }
 
     public function friendRequests()
     {
         return $this->hasMany(Friendship::class, 'user_id')
-        ->where('status', 'pending');
+            ->where('status', 'pending');
     }
 
     public function sentDirectMessage()
@@ -68,5 +68,10 @@ class User extends Authenticatable
     public function receivedDirectMessages()
     {
         return $this->hasMany(DirectMessage::class, 'receiver_id');
+    }
+
+    public function chats()
+    {
+        return $this->belongsToMany(Chat::class, 'chat_participants');
     }
 }

@@ -31,8 +31,22 @@ class Chat extends Model
     /**
      * Get the messages of the chat.
      */
-    public function messages()
+    public function directMessages()
     {
         return $this->hasMany(DirectMessage::class);
+    }
+
+    /**
+     * Get the latest message of the chat.
+     */
+    public function latestMessage()
+    {
+        return $this->hasOne(DirectMessage::class)->latestOfMany();
+    }
+
+    public function scopeBetweenUsersBatch($query, int $userId, array $friendIds)
+    {
+        return $query->whereHas('participants', fn($q) => $q->where('user_id', $userId))
+            ->whereHas('participants', fn($q) => $q->where('user_id', $friendIds));
     }
 }

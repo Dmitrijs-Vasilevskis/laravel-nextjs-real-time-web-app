@@ -13,11 +13,10 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/init-video-session', [VideoSessionController::class, 'initVideoSession']);
 
-    Route::post('delete-video-session', [VideoSessionController::class, 'deleteVideoSession']);
+    Route::post('/delete-video-session', [VideoSessionController::class, 'deleteVideoSession']);
 
     Route::post('/join-video-session', [VideoSessionController::class, 'joinVideoSession']);
 
@@ -62,7 +61,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::delete('/friend/remove/{id}', [FriendshipController::class, 'removeFriend']);
 
-    Route::get('/fetch-friends', [FriendshipController::class, 'fetchFriends']);
+    Route::get('/fetch-friends', [FriendshipController::class, 'fetchFriendList']);
+
+    Route::post('/fetch-sorted-friends', [FriendshipController::class, 'fetchSortedFriendList']);
 
     Route::get('/friend-requests/pending', [FriendshipController::class, 'getPendingRequests']);
 

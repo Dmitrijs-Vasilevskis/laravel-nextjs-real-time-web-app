@@ -1,53 +1,64 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\VideoSession;
-use App\Models\VideoSessionChatMessage;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
-use App\Events\VideoSession\Chat\ChatMessageEvent;
-use App\Events\VideoSession\VideoSyncEvent;
-use App\Events\VideoSession\VideoSyncAddToQueueEvent;
-use App\Events\VideoSession\VideoSyncPlaylistState;
-use App\Events\VideoSession\VideoSessionJoinEvent;
-use App\Events\VideoSession\VideoSyncPlaylistSwitchEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use App\Services\VideoSessionServices;
+use App\Models\User;
+use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class VideoSessionController extends Controller
 {
     /**
-     *  @var \App\Models\User
+     *  @var User
      */
-    protected $user;
+    protected User $user;
+
+    /**
+     *  @var VideoSessionServices
+     */
+    protected VideoSessionServices $videoSessionServices;
 
     /**
      * Get the currently authenticated user.
      * 
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
+     * @param  VideoSessionServices  $videoSessionServices
      */
-    public function __construct(Request $request)
-    {
+    public function __construct(
+        Request $request,
+        VideoSessionServices $videoSessionServices
+    ) {
         $this->user = $request->user();
+        $this->videoSessionServices = $videoSessionServices;
     }
 
     /**
      *  Get active video session by host_id
      * 
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function getActiveVideoSessions(Request $request): JsonResponse
     {
+        try {
+            $request->validate([
+                'host_id' => 'required',
+            ]);
 
-        $request->validate([
-            'host_id' => ['required'],
-        ]);
-
-        $videoSessionsCollection = VideoSession::where('host_id', $request->host_id)->get();
+            $videoSessionsCollection = $this->videoSessionServices->getActiveSessionsByHost((int)$request->host_id);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
 
         return response()->json($videoSessionsCollection);
     }
@@ -55,25 +66,33 @@ class VideoSessionController extends Controller
     /**
      *  Create a new video session
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param  Request  $request
+     * @return JsonResponse
      */
-    public function initVideoSession(Request $request)
+    public function initVideoSession(Request $request): JsonResponse
     {
+        try {
+            $request->validate([
+                'host_id' => 'required',
+                'video_id' => 'required',
+            ]);
 
-        $request->validate([
-            'host_id' => ['required'],
-            'video_id' => ['required'],
-        ]);
+            $sessionData = [
+                'host_id' => (int)$request->host_id,
+                'video_id' => (string)$request->video_id,
+                'token' => Str::random(40),
+                'session_id' => uniqid('sess_', false),
+                'is_public' => $request->is_public ?? false,
+                'is_active' => true,
+            ];
 
-        $videoSession = VideoSession::create([
-            'host_id' => $request->host_id,
-            'video_id' => $request->video_id,
-            'token' => Str::random(40),
-            'session_id' => uniqid('sess_', false),
-            'is_public' => $request->is_public ?? false,
-            'is_active' => true,
-        ]);
+            $videoSession = $this->videoSessionServices->createVideoSession($sessionData);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
 
         return response()->json($videoSession);
     }
@@ -81,24 +100,24 @@ class VideoSessionController extends Controller
     /**
      *  Delete a video session by creator request
      * 
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param  Request  $request
+     * @return JsonResponse
      */
-    public function deleteVideoSession(Request $request)
+    public function deleteVideoSession(Request $request): JsonResponse
     {
-        $request->validate([
-            'session_id' => ['required'],
-            'host_id' => ['required'],
-        ]);
+        try {
+            $request->validate([
+                'session_id' => 'required',
+                'host_id' => 'required',
+            ]);
 
-        if ($this->user->id !== $request->host_id) {
+            $this->videoSessionServices->deleteSession($request->session_id, $request->host_id, $this->user->id);
+        } catch (Throwable $e) {
             return response()->json([
-                'status' => 403,
-                'message' => 'You are not authorized to delete this video session'
-            ], 403);
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
         }
-
-        VideoSession::where('session_id', $request->session_id)->delete();
 
         return response()
             ->json([
@@ -110,20 +129,23 @@ class VideoSessionController extends Controller
     /**
      *  Join a video session, and broadcast join event
      * 
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param  Request  $request
+     * @return JsonResponse
      */
-    public function joinVideoSession(Request $request)
+    public function joinVideoSession(Request $request): JsonResponse
     {
-        $request->validate([
-            'session_id' => ['required'],
-        ]);
+        try {
+            $request->validate([
+                'session_id' => 'required',
+            ]);
 
-        $user = $request->user();
-
-        $videoSession = VideoSession::where('session_id', $request->session_id)->first();
-
-        broadcast(new VideoSessionJoinEvent($request->session_id, $user->name));
+            $videoSession = $this->videoSessionServices->joinSession($request->session_id, $this->user);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
 
         return response()->json($videoSession);
     }
@@ -131,17 +153,31 @@ class VideoSessionController extends Controller
     /**
      *  Broadcast sync event with the latest player state
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return JsonResponse|Response
      */
-    public function getVideoSessionState(Request $request): Response
+    public function getVideoSessionState(Request $request): JsonResponse|Response
     {
-        $request->validate([
-            'session_id' => ['required'],
-            'state' => ['required'],
-        ]);
+        try {
+            $request->validate([
+                'session_id' => 'required|string',
+                'state' => 'required|int',
+                'time' => 'required'
+            ]);
 
-        broadcast(new VideoSyncEvent($request->session_id, $request->state, $request->time));
+            $this->videoSessionServices->syncState(
+                $request->session_id,
+                $request->state,
+                $request->time
+            );
+        } catch (Throwable $e) {
+            Log::info($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
 
         return response()->noContent();
     }
@@ -150,18 +186,29 @@ class VideoSessionController extends Controller
      * Broadcast sync event with the latest playlist state,
      * current video index and seconds
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return JsonResponse|Response
      */
-    public function getVideoSessionPlaylistState(Request $request): Response
+    public function getVideoSessionPlaylistState(Request $request): JsonResponse|Response
     {
-        $request->validate([
-            'session_id' => ['required'],
-            'current_index' => ['required'],
-            'seconds' => ['required']
-        ]);
+        try {
+            $request->validate([
+                'session_id' => 'required',
+                'current_index' => 'required',
+                'seconds' => 'required'
+            ]);
 
-        broadcast(new VideoSyncPlaylistState($request->session_id, $request->current_index, $request->seconds));
+            $this->videoSessionServices->syncPlaylistState(
+                $request->session_id,
+                $request->current_index,
+                $request->seconds
+            );
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
 
         return response()->noContent();
     }
@@ -169,17 +216,27 @@ class VideoSessionController extends Controller
     /**
      * Broadcast add to queue event, with the video id for specific session
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return JsonResponse|Response
      */
-    public function videoSessionAddToQueue(Request $request): Response
+    public function videoSessionAddToQueue(Request $request): JsonResponse|Response
     {
-        $request->validate([
-            'session_id' => ['required'],
-            'video_id' => ['required']
-        ]);
+        try {
+            $request->validate([
+                'session_id' => 'required',
+                'video_id' => 'required'
+            ]);
 
-        broadcast(new VideoSyncAddToQueueEvent($request->session_id, $request->video_id));
+            $this->videoSessionServices->addToQueue(
+                $request->session_id,
+                $request->video_id
+            );
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
 
         return response()->noContent();
     }
@@ -188,18 +245,29 @@ class VideoSessionController extends Controller
      * Broadcast switch playlist event,
      * with the video id for specific session
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return JsonResponse|Response
      */
-    public function getVideoSessionPlayerSwitch(Request $request): Response
+    public function getVideoSessionPlayerSwitch(Request $request): JsonResponse|Response
     {
-        $request->validate([
-            'session_id' => ['required'],
-            'action' => ['required'],
-            'current_video_index' => ['required']
-        ]);
+        try {
+            $request->validate([
+                'session_id' => 'required',
+                'action' => 'required',
+                'current_video_index' => 'required'
+            ]);
 
-        broadcast(new VideoSyncPlaylistSwitchEvent($request->session_id, $request->action, $request->current_video_index));
+            $this->videoSessionServices->switchPlaylist(
+                $request->session_id,
+                $request->action,
+                $request->current_video_index
+            );
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
 
         return response()->noContent();
     }
@@ -209,43 +277,58 @@ class VideoSessionController extends Controller
     /**
      *  Get video session live chat messages
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param  Request  $request
+     * @return JsonResponse
      */
-    public function getVideoSessionMessages(Request $request): Collection
+    public function getVideoSessionMessages(Request $request): JsonResponse
     {
-        $request->validate([
-            'session_id' => ['required'],
-        ]);
+        try {
+            $request->validate([
+                'session_id' => 'required',
+            ]);
 
-        return VideoSessionChatMessage::where('session_id', $request->session_id)->get();
+            $videoSessionMessages = $this->videoSessionServices
+                ->getSessionChatMessages($request->session_id);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
+
+        return response()->json($videoSessionMessages);
     }
 
     /**
      * Broadcast a new live chat message for a specific session
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return JsonResponse|Response
      */
-    public function sendChatMessage(Request $request): Response
+    public function sendChatMessage(Request $request): JsonResponse|Response
     {
+        try {
+            $request->validate([
+                'session_id' => 'required|string|exists:video_session,session_id',
+                'message' => 'required|string',
+                'user_id' => 'required',
+                'from' => 'required|string',
+                'chat_name_color' => 'required'
+            ]);
 
-        $request->validate([
-            'session_id' => 'required|string|exists:video_session,session_id',
-            'message' => 'required|string',
-            'user_id' => 'required',
-            'from' => 'required|string'
-        ]);
-
-        $message = VideoSessionChatMessage::create([
-            'session_id' => $request->session_id,
-            'user_id' => $request->user_id,
-            'from' => $request->from,
-            'message' => $request->message,
-            'chat_name_color' => $request->chat_name_color
-        ]);
-
-        broadcast(new ChatMessageEvent($message->message, $message->from, $message->session_id, $message->chat_name_color, $message->created_at));
+            $this->videoSessionServices->sendMessage([
+                'session_id' => $request->session_id,
+                'user_id' => (int)$request->user_id,
+                'from' => $request->from,
+                'message' => $request->message,
+                'chat_name_color' => $request->chat_name_color
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
 
         return response()->noContent();
     }

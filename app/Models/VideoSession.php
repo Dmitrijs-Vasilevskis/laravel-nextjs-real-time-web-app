@@ -33,4 +33,14 @@ class VideoSession extends Model
     {
         return $this->belongsTo(User::class, 'host_id');
     }
+
+    public function scopeByHost($query, int $hostId)
+    {
+        return $query->where('host_id', $hostId);
+    }
+
+    public function scopeBySessionId($query, string $sessionId)
+    {
+        return $query->where('session_id', $sessionId);
+    }
 }

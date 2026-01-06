@@ -2,6 +2,7 @@
 
 namespace App\Events\VideoSession\Chat;
 
+use Carbon\Traits\Timestamp;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -20,7 +21,7 @@ class ChatMessageEvent implements ShouldBroadcast
         public string $from,
         public string $sessionId,
         public string $chatNameColor,
-        public string $created_at,
+        public $created_at,
     ) {}
 
     /**

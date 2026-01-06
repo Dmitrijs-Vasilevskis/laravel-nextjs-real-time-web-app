@@ -2,14 +2,6 @@
 
 return [
 
-    // 'providers' => [
-        Illuminate\Filesystem\FilesystemServiceProvider::class,
-        Illuminate\Broadcasting\BroadcastServiceProvider::class,
-        Illuminate\Cache\CacheServiceProvider::class,
-        Illuminate\Filesystem\FilesystemServiceProvider::class,
-        Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
-    // ],
-
     /*
     |--------------------------------------------------------------------------
     | Application Name

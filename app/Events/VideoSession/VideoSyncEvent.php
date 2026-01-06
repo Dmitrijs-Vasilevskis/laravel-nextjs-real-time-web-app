@@ -17,7 +17,7 @@ class VideoSyncEvent implements ShouldBroadcast
      */
     public function __construct(
         public string $sessionId,
-        public string $state,
+        public int $state,
         public string $time
     ) {}
 

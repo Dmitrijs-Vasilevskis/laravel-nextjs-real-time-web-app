@@ -20,9 +20,7 @@ class DirectMessageEvent implements ShouldBroadcast
         public DirectMessage $message,
         public int $receiverId,
         public int $senderId
-    ) {
-        //
-    }
+    ) {}
 
     /**
      * Get the channels the event should broadcast on.
@@ -33,6 +31,7 @@ class DirectMessageEvent implements ShouldBroadcast
     {
         return [
             new PrivateChannel('direct-message.' . $this->receiverId),
+            new PrivateChannel('direct-message.' . $this->senderId)
         ];
     }
 
@@ -45,7 +44,8 @@ class DirectMessageEvent implements ShouldBroadcast
     {
         return [
             'message' => $this->message,
-            'sender_id' => $this->senderId
+            'sender_id' => $this->senderId,
+            'receiver_id' => $this->receiverId
         ];
     }
 

@@ -16,7 +16,7 @@ class VideoSyncAddToQueueEvent implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
-        public string $sessionId,
+        public int $sessionId,
         public string $video_id,
     ) {}
 

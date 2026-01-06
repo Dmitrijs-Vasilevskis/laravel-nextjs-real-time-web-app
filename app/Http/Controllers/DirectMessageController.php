@@ -1,53 +1,64 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Models\DirectMessage;
+use App\Services\DirectMessageService;
 use Illuminate\Http\Request;
-use App\Events\DirectMessage\DirectMessageEvent;
-use App\Events\DirectMessage\DirectMessageReadEvent;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use App\Models\User;
 
 class DirectMessageController extends Controller
 {
     /**
-     *  @var \App\Models\User
+     *  @var User
      */
     protected $user;
+
+    protected DirectMessageService $directMessageService;
 
     /**
      * Get the currently authenticated user.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      */
-    public function __construct(Request $request)
-    {
+    public function __construct(
+        Request $request,
+        DirectMessageService $directMessageService
+    ) {
         $this->user = $request->user();
+        $this->directMessageService = $directMessageService;
     }
 
     /**
      * Send a direct message to a user.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return Response
      */
-    public function sendDirectMessage(Request $request)
+    public function sendDirectMessage(Request $request): JsonResponse
     {
-        $request->validate([
-            'receiver_id' => 'required|exists:users,id',
-            'message' => 'required|string|max:255',
-            'chat_id' => 'required|exists:chats,id'
-        ]);
+        try {
+            $request->validate([
+                'receiver_id' => 'required|exists:users,id',
+                'message' => 'required|string|max:255',
+                'chat_id' => 'required|exists:chats,id'
+            ]);
 
-        $message = DirectMessage::create([
-            'sender_id' => $this->user->id,
-            'receiver_id' => $request->receiver_id,
-            'message' => $request->message,
-            'chat_id' => $request->chat_id
-        ]);
-
-
-        broadcast(new DirectMessageEvent($message, $request->receiver_id, $this->user->id))->toOthers();
+            $message = $this->directMessageService->sendMessage(
+                userId: $this->user->id,
+                receiverId: $request->receiver_id,
+                message: $request->message,
+                chatId: $request->chat_id
+            );
+        } catch (\DomainException $e) {
+            return response()->json(
+                ['message' => $e->getMessage()],
+                503
+            );
+        }
 
         return response()->json($message);
     }
@@ -55,31 +66,37 @@ class DirectMessageController extends Controller
     /**
      * Retrieve direct messages exchanged between the authenticated user and a friend.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param  Request  $request
+     * @return JsonResponse
      *
      * Validates the request for 'friend_id', 'page', and 'limit', retrieves the messages
      * between the authenticated user and the specified friend, and paginates the results.
      */
-    public function getDirectMessages(Request $request)
+    public function getDirectMessages(Request $request): JsonResponse
     {
-        $request->validate([
-            'friend_id' => 'required|exists:users,id',
-            'chat_id' => 'required|exists:chats,id',
-            'page' => 'integer',
-            'limit' => 'integer'
-        ]);
+        try {
+            $request->validate([
+                'friend_id' => 'required|exists:users,id',
+                'chat_id' => 'required|exists:chats,id',
+                'page' => 'integer',
+                'limit' => 'integer'
+            ]);
 
-        $chatId = $request->chat_id;
-        $page = $request->page ?? 1;
-        $limit = $request->limit ?? 40;
+            $chatId = $request->chat_id;
+            $page = $request->page ?? 1;
+            $limit = $request->limit ?? 40;
 
-        $messageCollection = DirectMessage::where(function ($query) use ($chatId) {
-            $query->where('chat_id', $chatId);
-        })->orderBy('created_at', 'desc')
-            ->skip(($page - 1) * $limit)
-            ->take($limit)
-            ->get();
+            $messageCollection = $this->directMessageService->getMessages(
+                chatId: $chatId,
+                page: $page,
+                limit: $limit
+            );
+        } catch (\DomainException $e) {
+            return response()->json(
+                ['message' => $e->getMessage()],
+                503
+            );
+        }
 
         return response()->json($messageCollection);
     }
@@ -87,29 +104,35 @@ class DirectMessageController extends Controller
     /**
      * Update a direct message to mark it as read.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param  Request  $request
+     * @return JsonResponse
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function readDirectMessage(Request $request)
+    public function readDirectMessage(Request $request): JsonResponse
     {
-        $request->validate([
-            'message_id' => 'required|exists:direct_messages,id',
-            'sender_id' => 'required|exists:users,id'
-        ]);
+        try {
+            $request->validate([
+                'message_id' => 'required|exists:direct_messages,id',
+                'sender_id' => 'required|exists:users,id'
+            ]);
 
-        $receiverId = $this->user->id;
-
-        DirectMessage::where('id', $request->message_id)
-            ->where('receiver_id', $receiverId)
-            ->update(['is_read' => true]);
-
-        broadcast(new DirectMessageReadEvent($request->message_id, $request->sender_id, $receiverId))->toOthers();
+            $result = $this->directMessageService->markAsRead(
+                messageId: $request->message_id,
+                receiverId: $this->user->id,
+                senderId: $request->sender_id
+            );
+        } catch (\DomainException $e) {
+            return response()->json(
+                ['message' => $e->getMessage()],
+                503
+            );
+        }
 
         return response()->json([
             'message_id' => $request->message_id,
             'sender_id' => $request->sender_id,
+            'success' => $result
         ]);
     }
 }
